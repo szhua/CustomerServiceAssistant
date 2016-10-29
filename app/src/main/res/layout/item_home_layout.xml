@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:background="@color/white"
+    android:layout_height="wrap_content">
+
+ <View
+     android:id="@+id/firstview"
+     android:visibility="visible"
+     android:layout_width="match_parent"
+     android:layout_height="@dimen/common6dp"
+     android:background="@color/background"
+     ></View>
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:layout_width="@dimen/common50dp"
+        android:layout_height="@dimen/common50dp"
+        android:src="@drawable/header_icon"
+        android:scaleType="centerCrop"
+        android:layout_marginTop="@dimen/common6dp"
+        android:layout_marginLeft="@dimen/common16dp"
+        />
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_marginTop="@dimen/common18dp"
+            android:gravity="bottom"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/name"
+                android:layout_width="0dp"
+                android:layout_weight="6"
+                android:layout_height="wrap_content"
+                android:text="王小贱"
+                android:singleLine="true"
+                android:textSize="@dimen/name_text_size"
+                android:textColor="@color/text_color_normal"
+                android:layout_marginLeft="@dimen/common10dp"
+                />
+
+            <TextView
+
+                android:id="@+id/date"
+                android:layout_width="0dp"
+                android:layout_weight="4"
+                android:layout_height="wrap_content"
+                android:text="2016-05-15  18:36"
+                android:paddingRight="@dimen/common16dp"
+                android:gravity="right"
+                android:textSize="@dimen/date_text_size"
+                android:textColor="@color/text_color_light"
+                />
+
+        </LinearLayout>
+
+
+
+        <TextView
+            android:id="@+id/content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/common10dp"
+            android:layout_marginTop="@dimen/common6dp"
+            android:textColor="@color/text_color_normal"
+            android:maxLines="5"
+            android:paddingRight="@dimen/common10dp"
+            android:ellipsize="end"
+            android:text="高乐美嘉到底有没有效果家长说了算。非常感谢家长的反馈，祝孩子早日恢复！"
+            />
+
+
+        <com.pcjh.liabrary.ninegridimgview.NineGridImageView
+            android:id="@+id/ninegridview"
+            app:imgGap="3dp"
+            android:layout_marginLeft="@dimen/common10dp"
+            android:layout_marginTop="@dimen/common8dp"
+            android:layout_marginRight="@dimen/common30dp"
+            app:singleImgSize="200dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+        </com.pcjh.liabrary.ninegridimgview.NineGridImageView>
+
+        <LinearLayout
+            android:layout_marginTop="@dimen/common16dp"
+            android:gravity="right"
+            android:layout_marginLeft="@dimen/common10dp"
+            android:layout_marginBottom="@dimen/common30dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+
+            <LinearLayout
+                android:id="@+id/collect_bt"
+                android:layout_marginRight="@dimen/common10dp"
+                android:paddingLeft="@dimen/common10dp"
+                android:paddingRight="@dimen/common10dp"
+                android:paddingTop="@dimen/common6dp"
+                android:paddingBottom="@dimen/common6dp"
+                android:gravity="center_vertical"
+                android:background="@drawable/gray_bt_selector"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <ImageView
+                    android:id="@+id/collect_icon"
+                    android:layout_width="@dimen/common14dp"
+                    android:layout_height="@dimen/common14dp"
+                    android:src="@drawable/collect_un"
+                    android:layout_marginRight="@dimen/common4dp"
+                    />
+                <TextView
+                    android:id="@+id/collect_num"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="885"
+                    android:textSize="@dimen/name_text_size"
+                    android:textColor="@color/collect_color"
+                    />
+
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:id="@+id/transformbt"
+                android:layout_marginRight="@dimen/common10dp"
+                android:paddingLeft="@dimen/common10dp"
+                android:paddingRight="@dimen/common10dp"
+                android:paddingTop="@dimen/common6dp"
+                android:paddingBottom="@dimen/common6dp"
+                android:gravity="center_vertical"
+                android:background="@drawable/yellow_bt_selector"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <ImageView
+                    android:id="@+id/tranform_icon"
+                    android:layout_width="@dimen/common14dp"
+                    android:layout_height="@dimen/common14dp"
+                    android:src="@drawable/transfit"
+                    android:layout_marginRight="@dimen/common4dp"
+                    />
+                <TextView
+                    android:id="@+id/tranform_num"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="885"
+                    android:textSize="@dimen/name_text_size"
+                    android:textColor="@color/ss"
+                    />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+
+
+
+
+
+    </LinearLayout>
+
+</LinearLayout>
+
+<View
+    style="@style/Divider"
+    android:layout_marginBottom="1px"
+    ></View>
+
+
+</LinearLayout>

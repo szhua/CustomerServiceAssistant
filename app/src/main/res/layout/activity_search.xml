@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tl="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    tools:context="com.pcjh.assistant.activity.SearchActivity">
+
+    <include
+        layout="@layout/search_header"
+        ></include>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/tab_height">
+        <ImageView
+            android:background="@color/white"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:src="@drawable/add_icon"
+            android:id="@+id/add_icon"
+            android:paddingRight="@dimen/common10dp"
+            android:paddingLeft="@dimen/common12dp"
+            android:layout_alignParentRight="true"
+            />
+        <com.pcjh.liabrary.tablayout.SlidingTabLayout
+            android:layout_toLeftOf="@id/add_icon"
+            android:id="@+id/slidingtablayout"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/tab_height"
+            android:background="@color/white"
+            tl:tl_divider_color="@color/transparent_normal"
+            tl:tl_divider_padding="13dp"
+            tl:tl_divider_width="1dp"
+            tl:tl_indicator_color="@color/tabcolor"
+            tl:tl_indicator_height="2dp"
+            tl:tl_indicator_width_equal_title="true"
+            tl:tl_tab_padding="22dp"
+            tl:tl_tab_space_equal="true"
+            tl:tl_textSelectColor="@color/tabcolor"
+            tl:tl_textUnselectColor="@color/text_color_normal"
+            tl:tl_underline_color="@color/tabcolor"
+            tl:tl_underline_height="0dp"/>
+
+    </RelativeLayout>
+
+    <View
+        style="@style/Divider"
+        ></View>
+
+    <android.support.v4.view.ViewPager
+        android:id="@+id/viewpager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        ></android.support.v4.view.ViewPager>
+
+
+
+
+
+</LinearLayout>

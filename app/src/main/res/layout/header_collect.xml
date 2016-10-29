@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:background="@color/themecolor"
+    android:layout_height="@dimen/header_height">
+
+
+    <ImageView
+        android:id="@+id/back_bt"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:src="@drawable/back"
+        android:paddingLeft="@dimen/common16dp"
+        android:paddingRight="@dimen/common16dp"
+        />
+
+
+    <TextView
+        android:id="@+id/header_title"
+        android:paddingLeft="@dimen/common46dp"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:text="收藏"
+        android:gravity="center"
+        android:textStyle="bold"
+        android:textSize="@dimen/title_text_size"
+        android:textColor="@color/white"
+        />
+
+
+
+  <LinearLayout
+      android:layout_alignParentRight="true"
+      android:gravity="center_vertical"
+      android:layout_width="wrap_content"
+      android:layout_height="match_parent">
+
+      <ImageView
+          android:id="@+id/done_bt"
+          android:src="@drawable/calender"
+          android:paddingTop="@dimen/common16dp"
+          android:paddingBottom="@dimen/common16dp"
+          android:paddingRight="@dimen/common16dp"
+          android:paddingLeft="@dimen/common10dp"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"/>
+  </LinearLayout>
+
+
+
+
+
+</RelativeLayout>

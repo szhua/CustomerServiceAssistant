@@ -1,0 +1,17 @@
+<resources>
+
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowBackground">@color/background</item>
+        <item name="colorPrimary">@color/tabcolor</item>
+        <item name="colorPrimaryDark">@color/tabcolor</item>
+        <item name="colorAccent">@color/tabcolor</item>
+    </style>
+    <!--细的分割线-->
+
+    <style name="Divider">
+        <item name="android:background">@color/divider</item>
+        <item name="android:padding">0.0dip</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1.0px</item>
+    </style>
+</resources>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:background="@color/themecolor"
+    android:layout_height="@dimen/header_height">
+
+
+    <TextView
+        android:paddingLeft="@dimen/common30dp"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:text="客服助手"
+        android:gravity="center"
+        android:textStyle="bold"
+        android:textSize="@dimen/title_text_size"
+        android:textColor="@color/white"
+        />
+
+
+
+  <LinearLayout
+      android:layout_alignParentRight="true"
+      android:gravity="center_vertical"
+      android:layout_width="wrap_content"
+      android:layout_height="match_parent">
+
+      <ImageView
+          android:id="@+id/search_bt"
+          android:src="@drawable/search_icon"
+          android:paddingTop="@dimen/common10dp"
+          android:paddingBottom="@dimen/common10dp"
+          android:paddingRight="@dimen/common10dp"
+          android:paddingLeft="@dimen/common10dp"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"/>
+      <ImageView
+          android:id="@+id/collect_bt"
+          android:src="@drawable/collect_icon"
+          android:paddingTop="@dimen/common10dp"
+          android:paddingBottom="@dimen/common10dp"
+          android:paddingRight="@dimen/common16dp"
+          android:paddingLeft="@dimen/common10dp"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"/>
+  </LinearLayout>
+
+
+
+
+
+</RelativeLayout>

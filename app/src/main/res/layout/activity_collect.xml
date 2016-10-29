@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.pcjh.assistant.activity.CollectActivity">
+
+    <include
+        layout="@layout/header_collect"
+        ></include>
+
+    <TextView
+        android:id="@+id/date"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="2016-05-06"
+        android:textSize="@dimen/text_size_14sp"
+        android:textColor="@color/text_color_light"
+        android:layout_marginTop="@dimen/common4dp"
+        android:layout_marginBottom="@dimen/common4dp"
+        android:layout_marginLeft="@dimen/common16dp"
+        />
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:id="@+id/fragmentcontainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
+
+
+    </LinearLayout>
+
+
+
+
+
+
+
+</LinearLayout>

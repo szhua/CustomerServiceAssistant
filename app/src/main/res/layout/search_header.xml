@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:background="@color/themecolor"
+    android:layout_height="@dimen/header_height"
+  >
+
+
+    <ImageView
+        android:id="@+id/back_bt"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:src="@drawable/back"
+        android:paddingLeft="@dimen/common16dp"
+        android:paddingRight="@dimen/common16dp"
+        />
+
+
+
+     <LinearLayout
+         android:focusableInTouchMode="true"
+         android:focusable="true"
+         android:orientation="vertical"
+         android:layout_centerInParent="true"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content">
+
+         <EditText
+             android:id="@+id/search_et"
+             android:paddingBottom="@dimen/common6dp"
+             android:paddingTop="@dimen/common6dp"
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+             android:layout_centerInParent="true"
+             android:layout_marginLeft="@dimen/common46dp"
+             android:layout_marginRight="@dimen/common30dp"
+             android:hint="搜索"
+             android:singleLine="true"
+             android:textColor="@color/white"
+             android:textSize="@dimen/text_size_16sp"
+             android:textColorHint="@color/translucent_white"
+             android:drawableLeft="@drawable/search_icon"
+             android:drawablePadding="@dimen/common10dp"
+             android:background="@color/transparent_normal"
+             />
+         <View
+             android:layout_width="match_parent"
+             android:background="@color/translucent_white"
+             android:layout_marginLeft="@dimen/common46dp"
+             android:layout_marginRight="@dimen/common30dp"
+             android:layout_height="2px"></View>
+     </LinearLayout>
+
+
+
+
+
+
+</RelativeLayout>

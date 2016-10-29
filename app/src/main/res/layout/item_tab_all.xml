@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:background="@color/background"
+    android:layout_height="match_parent">
+
+
+   <RelativeLayout
+      android:layout_marginLeft="@dimen/common10dp"
+       android:background="@drawable/tag_all_shape"
+       android:layout_marginTop="@dimen/common16dp"
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content">
+       <ImageView
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:src="@drawable/add_tag"
+           android:layout_centerVertical="true"
+           android:paddingTop="@dimen/common10dp"
+           android:paddingBottom="@dimen/common10dp"
+           android:paddingLeft="@dimen/common6dp"
+           android:paddingRight="@dimen/common6dp"
+           />
+
+       <TextView
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:text="胃病"
+           android:layout_centerVertical="true"
+           android:layout_centerInParent="true"
+           />
+   </RelativeLayout>
+
+
+</LinearLayout>
