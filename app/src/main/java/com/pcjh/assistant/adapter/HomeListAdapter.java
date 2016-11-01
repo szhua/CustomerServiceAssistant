@@ -17,6 +17,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.pcjh.assistant.R;
+import com.pcjh.assistant.activity.CheckPhotoActivity;
 import com.pcjh.assistant.entity.HomeEntity;
 import com.pcjh.liabrary.ninegridimgview.NineGridImageView;
 import com.pcjh.liabrary.ninegridimgview.NineGridImageViewAdapter;
@@ -117,7 +118,7 @@ public class HomeListAdapter extends RecyclerView.Adapter {
 
                          if(files==null||files.size()==0){
                              intent.setAction(Intent.ACTION_SEND) ;
-                             intent.setType("text/*") ;
+                             intent.setType("text/plain") ;
                          }else{
                              intent.setAction(Intent.ACTION_SEND_MULTIPLE);
                              intent.setType("image/*");
@@ -199,10 +200,11 @@ public class HomeListAdapter extends RecyclerView.Adapter {
             protected ImageView generateImageView(Context context) {
                 return super.generateImageView(context);
             }
-
             @Override
             protected void onItemImageClick(Context context, int index, List<String> list) {
                 Toast.makeText(context, "image position is " + index, Toast.LENGTH_SHORT).show();
+                Intent intent =new Intent(context, CheckPhotoActivity.class) ;
+                context.startActivity(intent);
             }
         };
 

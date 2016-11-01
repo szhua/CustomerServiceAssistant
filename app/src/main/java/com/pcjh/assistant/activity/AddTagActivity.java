@@ -1,5 +1,6 @@
 package com.pcjh.assistant.activity;
 
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -27,12 +28,7 @@ public class AddTagActivity extends BaseActivity {
     @InjectView(R.id.tag_all_container)
     LinearLayout tagAllContainer;
 
-
-
     private FullyGridLayoutManager gridLayoutManager  ;
-
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,9 +39,9 @@ public class AddTagActivity extends BaseActivity {
         gridLayoutManager =new FullyGridLayoutManager(this,4) ;
      //   selectTagView.setLayoutManager(gridLayoutManager);
         selectTagView.setAdapter(new TagSelectedAdapterForGrid());
-
         allTagRecycleView.setAdapter(new TagAllAdapterForGrid());
 
+       
 
     }
 }

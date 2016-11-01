@@ -7,10 +7,12 @@ import android.view.View;
 import android.widget.ImageView;
 
 import com.pcjh.assistant.R;
+import com.pcjh.assistant.WX.WxUtil;
 import com.pcjh.assistant.adapter.HomePagerAdapter;
 import com.pcjh.assistant.base.BaseActivity;
 import com.pcjh.assistant.fragment.HomeFragment;
 import com.pcjh.liabrary.tablayout.SlidingTabLayout;
+import com.tencent.mm.sdk.modelmsg.WXTextObject;
 
 import java.util.ArrayList;
 
@@ -34,6 +36,7 @@ public class HomeActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        WxUtil.regWX(this);
         setContentView(R.layout.activity_home);
         ButterKnife.inject(this);
         for (String title : mTitles) {
@@ -47,11 +50,11 @@ public class HomeActivity extends BaseActivity {
         addIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent =new Intent(HomeActivity.this,AddTagActivity.class) ;
-                startActivity(intent);
+  WxUtil.shareToWxCircle("jifsdjfidsfjdljsdlkfjsdfjsdjfsdfjsdfjsd");
             }
         });
     }
+
 
     @Override
     protected void onStart() {
