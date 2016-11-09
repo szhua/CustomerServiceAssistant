@@ -146,7 +146,7 @@ public abstract class IDao {
                 int error_code = 0;
                 try {
                     JsonNode node = ResultUtil.handleResult(responseBody);
-                    boolean responseCode = node.findValue("success").asBoolean();
+                    int responseCode = node.findValue("status").asInt();
                     //  String responseCode = node.findValue("succeed").asText();
                     if (node.findValue("msg") != null) {
                         errorInfo = node.findValue("msg").asText();
@@ -155,8 +155,7 @@ public abstract class IDao {
                     if (node.findValue("error_code") != null) {
                         error_code = node.findValue("error_code").asInt();
                     }
-
-                    if (responseCode) {
+                    if (requestCode==0) {
                         onRequestSuccess(node, requestCode);
                         mResult.onRequestSuccess(requestCode);
                     } else {
@@ -172,7 +171,6 @@ public abstract class IDao {
             @Override
             public void onFailure(int statusCode, Header[] headers, String responseBody, Throwable error) {
                 Log.d(TAG, "statusCode:" + statusCode + " Body:" + responseBody);
-
                 if (statusCode == 0)
                     mResult.onNoConnect();
                 else

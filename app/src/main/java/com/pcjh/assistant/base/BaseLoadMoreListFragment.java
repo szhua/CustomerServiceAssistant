@@ -13,7 +13,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.pcjh.assistant.R;
-import com.pcjh.assistant.util.ColorDivider;
 import com.pcjh.liabrary.refreshLayout.RecyclerRefreshLayout;
 
 
@@ -93,7 +92,6 @@ public abstract class BaseLoadMoreListFragment extends BaseFragment implements S
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(getAdapter());
-        recyclerView.addItemDecoration(new ColorDivider(getContext(),LinearLayoutManager.VERTICAL,getResources(),R.color.themecolor));
         //对上拉加载更多的处理；
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override

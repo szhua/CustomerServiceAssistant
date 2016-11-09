@@ -11,7 +11,6 @@ import com.pcjh.assistant.R;
 import com.pcjh.assistant.adapter.HomeListAdapter;
 import com.pcjh.assistant.base.BaseLoadMoreListFragment;
 import com.pcjh.assistant.entity.HomeEntity;
-import com.pcjh.assistant.util.ColorDivider;
 
 import java.util.ArrayList;
 import java.util.Arrays;

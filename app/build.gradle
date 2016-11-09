@@ -17,6 +17,13 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['libs']
+        }
+    }
 }
 android {
     packagingOptions {
@@ -43,5 +50,6 @@ dependencies {
     compile 'de.hdodenhof:circleimageview:1.3.0'
     compile 'io.reactivex:rxjava:1.1.0'
     compile 'io.reactivex:rxandroid:1.1.0'
+    compile 'eu.chainfire:libsuperuser:1.0.0.201602271131'
     compile project(':asynchttp')
 }
