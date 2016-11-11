@@ -1,6 +1,8 @@
 package com.pcjh.assistant.activity;
 
+import android.content.ContextWrapper;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
@@ -11,15 +13,18 @@ import android.widget.Button;
 import com.mengma.asynchttp.RequestCode;
 import com.mengma.asynchttp.interf.INetResult;
 import com.pcjh.assistant.R;
+import com.pcjh.assistant.Service1;
 import com.pcjh.assistant.base.AppHolder;
 import com.pcjh.assistant.base.BaseActivity;
 import com.pcjh.assistant.dao.InitDao;
 import com.pcjh.assistant.db.DbManager;
+import com.pcjh.assistant.entity.HomeEntity;
 import com.pcjh.assistant.entity.UserInfo;
 import com.pcjh.assistant.entity.Users;
 import com.pcjh.assistant.util.ChmodUtil;
 import com.pcjh.assistant.util.Md5;
 import com.pcjh.assistant.util.Root;
+import com.pcjh.assistant.util.SharedPrefsUtil;
 import com.pcjh.assistant.util.XmlPaser;
 import com.pcjh.liabrary.utils.UiUtil;
 
@@ -60,6 +65,7 @@ public class StartActivity extends BaseActivity implements INetResult{
     private Process process;
     private DataOutputStream os;
     private DataInputStream is;
+    private SharedPreferences  mPreferences;
 
 
     @Override
@@ -98,7 +104,7 @@ public class StartActivity extends BaseActivity implements INetResult{
                                     public void onNext(UserInfo userInfo) {
                                         Log.i("leilei", "nickname" +userInfo.getNickName());
                                         AppHolder.getInstance().setUser(userInfo);
-
+//
                                         initDao =new InitDao(StartActivity.this,StartActivity.this) ;
                                         initDao.get_token("shuweineng888");
                                     }
@@ -115,8 +121,37 @@ public class StartActivity extends BaseActivity implements INetResult{
         Log.i("szhua","result"+initDao.getJson()) ;
         String token =initDao.getToken();
         AppHolder.getInstance().setToken(token);
-        Intent intent =new Intent(StartActivity.this,TimerActivity.class)  ;
+        Users users =AppHolder.getInstance().getUsers();
+        Intent intent =new Intent(StartActivity.this,HomeActivity.class)  ;
         startActivity(intent);
+
+        SharedPrefsUtil.putValue(StartActivity.this,"uin",users.getUin());
+        SharedPrefsUtil.putValue(StartActivity.this,"password",users.getPassword());
+        SharedPrefsUtil.putValue(StartActivity.this,"dbPath",users.getDbPath());
+        SharedPrefsUtil.putValue(StartActivity.this,"token",token);
+        SharedPrefsUtil.putValue(StartActivity.this,"wxid",AppHolder.getInstance().getUser().getWxId());
+        //SharedPrefsUtil.putValue(StartActivity.this,"wxid",AppHolder.getInstance().getUsers().getId());
+
+
+        startService(new Intent(StartActivity.this,Service1.class));
+
+        /**
+         *  public String uin ;
+         public String password ;
+         public String dbPath ;
+         public String nickName ;
+         public String face ;
+         public String contactLabelIds ;
+         public String userId ;
+         */
+
+
+
+        mPreferences = getSharedPreferences("AutoStart", ContextWrapper.MODE_PRIVATE);
+        boolean bStart = mPreferences.getBoolean("AddToAuto", false);
+        SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putBoolean("AddToAuto", true);
+        editor.commit();
     }
 
     @Override
@@ -367,7 +402,7 @@ public class StartActivity extends BaseActivity implements INetResult{
     }
 
     //获得root的权限；
-    public void getRoot() {
+    public void getRoot(){
         try {
             process = Runtime.getRuntime().exec("/system/xbin/su"); /*这里可能需要修改su
 的源代码 （注掉  if (myuid != AID_ROOT && myuid != AID_SHELL) {*/

@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.pcjh.assistant">
 
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -24,6 +26,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
+        android:name=".MyApplication1"
         android:theme="@style/AppTheme">
         <activity android:name=".activity.HomeActivity"></activity>
         <activity android:name=".activity.CollectActivity" />
@@ -44,6 +47,33 @@
             </intent-filter>
         </activity>
         <activity android:name=".activity.TimerActivity"></activity>
+
+
+
+        <service android:name=".Service1" android:process=":process1"/>
+        <receiver android:name=".Receiver1" android:process=":process1"/>
+        <service android:name=".Service2" android:process=":process2"/>
+        <receiver android:name=".Receiver2" android:process=":process2"/>
+
+
+        <!-- 开机自启动广播接受 -->
+        <receiver android:name=".AutoStartBroadcastReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- 开机自启动服务-->
+        <service android:name=".AutoStartService"
+            android:label="AutoStartService"
+            android:enabled="true"
+            android:exported="true"
+            android:process=":remote">
+        </service>
     </application>
+
+
+
+
 
 </manifest>

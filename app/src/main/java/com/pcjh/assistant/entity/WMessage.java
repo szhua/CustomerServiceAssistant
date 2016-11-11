@@ -4,6 +4,8 @@ import android.text.TextUtils;
 
 import com.pcjh.assistant.util.Md5;
 
+import java.io.File;
+
 /**
  * Created by szhua on 2016/10/10.
  */
@@ -21,6 +23,32 @@ public class WMessage {
   public  String imgPath ;
  public boolean isVoice ;
 public boolean isImage ;
+    public int sendType ;
+    public File  file ;
+
+    public String tag;
+
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
+    public String getTag() {
+        return tag;
+    }
+
+    public File getFile() {
+        return file;
+    }
+
+    public void setFile(File file) {
+        this.file = file;
+    }
+
+    public int getSendType() {
+        return sendType;
+    }
+    public void setSendType(int sendType) {
+        this.sendType = sendType;
+    }
     public boolean isVoice() {
         return isVoice;
     }

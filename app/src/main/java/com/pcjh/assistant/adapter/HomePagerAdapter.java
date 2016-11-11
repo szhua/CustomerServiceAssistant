@@ -13,16 +13,16 @@ import java.util.ArrayList;
  */
 public class HomePagerAdapter extends FragmentPagerAdapter {
     private ArrayList<HomeFragment> homeFragments ;
-    private String [] mTitles  ;
+    private ArrayList <String> mTitles  ;
 
     public void setHomeFragments(ArrayList<HomeFragment> homeFragments) {
         this.homeFragments = homeFragments;
     }
-    public void setmTitles(String[] mTitles) {
+    public void setmTitles(ArrayList<String> mTitles) {
         this.mTitles = mTitles;
     }
 
-     public HomePagerAdapter(FragmentManager fm ,String [] mTitles){
+     public HomePagerAdapter(FragmentManager fm ,ArrayList<String> mTitles){
          super(fm);
          this.mTitles =mTitles ;
      }
@@ -36,7 +36,7 @@ public class HomePagerAdapter extends FragmentPagerAdapter {
     }
     @Override
     public CharSequence getPageTitle(int position) {
-        return mTitles[position];
+        return mTitles.get(position);
     }
 
     @Override

@@ -277,7 +277,6 @@ public class BaseActivity extends AppCompatActivity implements INetResult {
     }
     /**
      * 获得contactLabels ；
-     *
      * @param users
      * @return contactLabels
      */
@@ -311,12 +310,6 @@ public class BaseActivity extends AppCompatActivity implements INetResult {
                 });
         return labelObser;
     }
-
-
-
-
-
-
 
 
     public  List<RConact> _GetContact(String where,Users users){

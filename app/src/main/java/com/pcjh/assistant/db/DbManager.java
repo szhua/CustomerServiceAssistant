@@ -8,6 +8,7 @@ import android.text.TextUtils;
 
 
 import com.pcjh.assistant.entity.Label;
+import com.pcjh.assistant.entity.LabelConact;
 import com.pcjh.assistant.entity.RConact;
 import com.pcjh.assistant.entity.Users;
 
@@ -27,6 +28,29 @@ public class DbManager {
         // 所以要确保context已初始化,我们可以把实例化DBManager的步骤放在Activity的onCreate里
         db = helper.getWritableDatabase();
     }
+
+    public void addLabelConact(List<LabelConact> labelConacts){
+        db.beginTransaction();
+
+        try
+        {
+            for (LabelConact labelConact : labelConacts)
+            {
+                db.execSQL("INSERT INTO " + DatabaseHelper.TABLE_NAME_LABELCONACT +"('labelid','labelname','username' ,'alias')"
+                        + " VALUES(?, ? ,? , ? )", new Object[]{labelConact.getLabel().getLabelID(),
+                        labelConact.getLabel().getLabelName(), labelConact.getRconact().getTalker() ,labelConact.getRconact().getAlias()});
+                // 带两个参数的execSQL()方法，采用占位符参数？，把参数值放在后面，顺序对应
+                // 一个参数的execSQL()方法中，用户输入特殊字符时需要转义
+                // 使用占位符有效区分了这种情况
+            }
+            db.setTransactionSuccessful(); // 设置事务成功完成
+        }
+        finally
+        {
+            db.endTransaction(); // 结束事务
+        }
+    }
+
 
     public void addLabel(List<Label> labels){
         db.beginTransaction(); // 开始事务
@@ -124,15 +148,19 @@ public class DbManager {
         }
     }
 
-    public void deleteLabels(ArrayList<Label> labels){
-        for (Label label : labels) {
-            db.delete(DatabaseHelper.TABLE_NAME_RConact,"labelid = ?",new String []{label.getLabelID()}) ;
+    public void deleteLabelConacts(ArrayList<LabelConact> labelConacts){
+
+        for (LabelConact labelConact : labelConacts) {
+            db.delete(DatabaseHelper.TABLE_NAME_LABELCONACT,"username = ?",new String []{labelConact.getRconact().getUsername()}) ;
         }
     }
 
 
-
-
+    public void deleteLabels(ArrayList<Label> labels){
+        for (Label label : labels) {
+            db.delete(DatabaseHelper.TABLE_NAME_LABEL,"labelid = ?",new String []{label.getLabelID()});
+        }
+    }
 
 
 
@@ -146,6 +174,31 @@ public class DbManager {
         db.delete(DatabaseHelper.TABLE_NAME_User, "uin == ?",
                 new String[] { String.valueOf(person.getUin()) });
     }
+
+    public List<LabelConact> queryLabelConact(){
+
+        ArrayList<LabelConact> labelConacts =new ArrayList<>() ;
+        Cursor c = queryTheCursor(DatabaseHelper.TABLE_NAME_LABELCONACT);
+        while (c.moveToNext())
+        {
+            LabelConact lableCon =new LabelConact() ;
+            Label label =new Label() ;
+            RConact rConact =new RConact() ;
+            label.setLabelID(c.getString(c.getColumnIndex("labelid")));
+            label.setLabelName(c.getString(c.getColumnIndex("labelname")));
+            rConact.setUsername(c.getString(c.getColumnIndex("username")));
+            if(TextUtils.isEmpty(c.getString(c.getColumnIndex("alias")))){
+            rConact.setAlias(c.getString(c.getColumnIndex("username")));
+            }else{
+            rConact.setAlias(c.getString(c.getColumnIndex("alias")));}
+            lableCon.setLabel(label);
+            lableCon.setRconact(rConact);
+            labelConacts.add(lableCon);
+        }
+        c.close();
+        return labelConacts;
+    }
+
 
     public List<Label> queryLabels (){
 

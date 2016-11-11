@@ -23,7 +23,7 @@ public class UploadChatLogsDao extends IDao {
     }
 
 
-    public void uploadChatLogs(String wx , String token , ArrayList<WMessage> wxs){
+    public void uploadChatLogs(String wx , String token , ArrayList<WMessage> wxs ,String filesize ,String server ){
         RequestParams requestParams =new RequestParams() ;
         requestParams.add("wx",wx);
         requestParams.add("token",token);
@@ -36,11 +36,11 @@ public class UploadChatLogsDao extends IDao {
             else{
               requestParams.add("direct[]"+i,"1");
             }
-            requestParams.put("type[]"+i,"0");
+            requestParams.put("type[]"+i,wMessage.getSendType());
             requestParams.add("content[]"+i,wMessage.getContent());
             requestParams.add("add_time[]"+i,wMessage.getCreateTime());
-            requestParams.put("filesize[]"+i,"");
-            requestParams.put("server[]"+i,"");
+            requestParams.put("filesize[]"+i,filesize);
+            requestParams.put("server[]"+i,server);
         }
         postRequest(Constant.BASE_URL+Constant.UPLOAD_CHAT_LOGS,requestParams, RequestCode.CODE_5);
     }

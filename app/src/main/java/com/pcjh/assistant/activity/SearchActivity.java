@@ -45,22 +45,22 @@ public class SearchActivity extends BaseActivity {
         ButterKnife.inject(this);
 
 
-        for (String title : mTitles) {
-            homeFragments.add(HomeFragment.getInstance(title));
-        }
-        mAdapter = new HomePagerAdapter(getSupportFragmentManager());
-        mAdapter.setmTitles(mTitles);
-        mAdapter.setHomeFragments(homeFragments);
-        viewpager.setAdapter(mAdapter);
-        slidingtablayout.setViewPager(viewpager);
-
-        addIcon.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent =new Intent(SearchActivity.this,AddTagActivity.class) ;
-                startActivity(intent);
-            }
-        });
+//        for (String title : mTitles) {
+//            homeFragments.add(HomeFragment.getInstance(title));
+//        }
+//        mAdapter = new HomePagerAdapter(getSupportFragmentManager());
+//        mAdapter.setmTitles(mTitles);
+//        mAdapter.setHomeFragments(homeFragments);
+//        viewpager.setAdapter(mAdapter);
+//        slidingtablayout.setViewPager(viewpager);
+//
+//        addIcon.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Intent intent =new Intent(SearchActivity.this,AddTagActivity.class) ;
+//                startActivity(intent);
+//            }
+//        });
 
 
     }

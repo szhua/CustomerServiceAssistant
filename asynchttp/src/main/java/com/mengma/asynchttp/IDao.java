@@ -155,7 +155,7 @@ public abstract class IDao {
                     if (node.findValue("error_code") != null) {
                         error_code = node.findValue("error_code").asInt();
                     }
-                    if (requestCode==0) {
+                    if (responseCode==0) {
                         onRequestSuccess(node, requestCode);
                         mResult.onRequestSuccess(requestCode);
                     } else {

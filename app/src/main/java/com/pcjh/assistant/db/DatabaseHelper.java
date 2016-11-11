@@ -14,6 +14,7 @@ public class DatabaseHelper  extends SQLiteOpenHelper{
     public static final String TABLE_NAME_User ="user" ;
     public static final String TABLE_NAME_RConact ="rconact" ;
     public static final String TABLE_NAME_LABEL ="label" ;
+    public static final String TABLE_NAME_LABELCONACT ="lc" ;
     public DatabaseHelper(Context context){
         super(context, DB_NAME, null, version);
     }
@@ -43,12 +44,22 @@ public class DatabaseHelper  extends SQLiteOpenHelper{
 
         db.execSQL(sql2);
 
+
+        String sql4 ="create table lc ( id integer PRIMARY KEY  autoincrement , " +
+                "labelid varchar(10) not null ," +
+                "labelname varchar (60) not null , " +
+                "username  varchar (60) not null , " +
+                "alias varchar (60) not null "  +
+                ") ;" ;
+
+        db.execSQL(sql4);
+
         String sql3 ="create table label ( id integer PRIMARY KEY  autoincrement , " +
                 "labelid varchar(10) not null ," +
                 "labelname varchar (60) not null "  +
                 ") ;" ;
-
         db.execSQL(sql3);
+
 
     }
 

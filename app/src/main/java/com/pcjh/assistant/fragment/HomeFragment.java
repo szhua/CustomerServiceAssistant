@@ -7,9 +7,12 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.LinearLayout;
 
+import com.mengma.asynchttp.interf.INetResult;
 import com.pcjh.assistant.R;
 import com.pcjh.assistant.adapter.HomeListAdapter;
+import com.pcjh.assistant.base.AppHolder;
 import com.pcjh.assistant.base.BaseLoadMoreListFragment;
+import com.pcjh.assistant.dao.GetMaterialListDao;
 import com.pcjh.assistant.entity.HomeEntity;
 
 import java.util.ArrayList;
@@ -19,9 +22,9 @@ import java.util.List;
 /**
  * Created by szhua on 2016/10/28.
  */
-public class HomeFragment extends BaseLoadMoreListFragment
+public class HomeFragment extends BaseLoadMoreListFragment implements INetResult
+
 {
-    
     private ArrayList<HomeEntity > homeEntities  =new ArrayList<>() ;
     
     private String[] IMG_URL_LIST = {
@@ -38,16 +41,24 @@ public class HomeFragment extends BaseLoadMoreListFragment
     };
 
     private String type;
+    private String title ;
     private HomeListAdapter homeListAdapter ;
-    public static HomeFragment getInstance(String title){
+    private GetMaterialListDao getMaterialListDao =new GetMaterialListDao(getContext(),this);
+
+
+    public static HomeFragment getInstance(String title,String type){
         HomeFragment homeFragment =new HomeFragment() ;
-        homeFragment.type =title ;
+        homeFragment.type ="1" ;
+        homeFragment.title =title ;
         return homeFragment ;
     }
+
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getMaterialListDao.getMaterialList("shuweineng888", AppHolder.getInstance().getToken(),type);
         homeListAdapter =new HomeListAdapter(getContext());
         for (int i = 0; i <9 ; i++) {
             List<String> imgUrls = new ArrayList<>();
