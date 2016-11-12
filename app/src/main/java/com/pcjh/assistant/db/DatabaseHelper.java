@@ -15,6 +15,7 @@ public class DatabaseHelper  extends SQLiteOpenHelper{
     public static final String TABLE_NAME_RConact ="rconact" ;
     public static final String TABLE_NAME_LABEL ="label" ;
     public static final String TABLE_NAME_LABELCONACT ="lc" ;
+    public static final String TABLE_NAME_TAG ="tag";
     public DatabaseHelper(Context context){
         super(context, DB_NAME, null, version);
     }
@@ -53,6 +54,15 @@ public class DatabaseHelper  extends SQLiteOpenHelper{
                 ") ;" ;
 
         db.execSQL(sql4);
+
+
+        String sql5 ="create table tag ( id integer PRIMARY KEY  autoincrement , " +
+                "type varchar(10) not null ," +
+                "name varchar (60) not null  " +
+                ") ;" ;
+
+        db.execSQL(sql5);
+
 
         String sql3 ="create table label ( id integer PRIMARY KEY  autoincrement , " +
                 "labelid varchar(10) not null ," +

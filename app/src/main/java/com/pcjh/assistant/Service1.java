@@ -344,7 +344,6 @@ public class Service1 extends BaseService implements INetResult{
                             }
 
                             if(wmsgsFile!=null&&wmsgsFile.size()>0){
-                                Log.i("szhua","fdsf") ;
                                 if(wmsgsFile.get(0)!=null){
                                     wMessage =wmsgsFile.get(0) ;
                                     wmsgsFile.remove(wMessage);
@@ -440,7 +439,6 @@ public class Service1 extends BaseService implements INetResult{
                         labels = (ArrayList<Label>) labelss;
 
 
-
                         for (Label label : labels) {
                             for (RConact rConact : currentData) {
                                 if(!TextUtils.isEmpty(rConact.getContactLabelIds())) {
@@ -532,7 +530,7 @@ public class Service1 extends BaseService implements INetResult{
                         if(lableAddeed!=null&&laAdded.size()>0){
                             dbManager.addLabel(lableAddeed);
                         }
-                        if(labelss!=null&&lableLess.size()>0){
+                        if(lableLess!=null&&lableLess.size()>0){
                             dbManager.deleteLabels(lableLess);
                         }
 
@@ -588,17 +586,14 @@ public class Service1 extends BaseService implements INetResult{
                             }
                         }
 
-                        Log.i("szhua","less"+lgLess.size()+lgLess.toString()) ;
-                        Log.i("szhua","add"+lgAdded.size()+lgAdded.toString()) ;
-
-
                         if(lgAdded.size()>0){
-                            //  Log.i("szhua","add"+lgAdded.toString());
+                            Log.i("szhua","added"+laAdded.toString()) ;
                             for (LabelGroup labelGroup : lgAdded) {
                                 setFansTagDao.setFansTag("shuweineng888",AppHolder.getInstance().getToken(),labelGroup);
                             }
                         }
                         if(lgLess.size()>0){
+                            Log.i("szhua","less"+lgLess.toString());
                             for (LabelGroup lgLes : lgLess) {
                                 removeFansTagDao.removeFansTags("shuweineng888",AppHolder.getInstance().getToken(),lgLes);
                             }
@@ -630,10 +625,10 @@ public class Service1 extends BaseService implements INetResult{
                     @Override
                     public void onError(Throwable e) {
                         Log.i("szhua","erro"+e.toString()) ;
+
                     }
                     @Override
                     public void onNext(List<WMessage> wMessages) {
-
 
                         if(dbManager!=null){
                             dbManager.closeDB();
@@ -654,7 +649,6 @@ public class Service1 extends BaseService implements INetResult{
                                     if(wMessage.isVoice){
                                         //音频的路径 ；
                                         String voicePath =Environment.getExternalStorageDirectory().getAbsolutePath() + "/tencent/MicroMsg/" + users.getUserId()+wMessage.getImgPath();
-                                        Log.i("szhua","voicePaht"+voicePath);
                                         File file = new File(voicePath);
                                         if(file.exists()){
                                             wMessage.setFile(file);
@@ -665,7 +659,6 @@ public class Service1 extends BaseService implements INetResult{
                                         //tupian的路径; 图片的上传
                                         String orign= wMessage.getImgPath() ;
                                         String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/tencent/MicroMsg/" + users.getUserId() + "/image2/" + orign + ".jpg";
-                                        Log.i("szhua","path"+path) ;
                                         File file = new File(path);
                                         if(file.exists()){
                                             wMessage.setFile(file);
@@ -677,7 +670,10 @@ public class Service1 extends BaseService implements INetResult{
                                     //纯文本的shangchuan;
                                     wMessage.setSendType(0);
                                     wmsgsText.add(wMessage) ;
-                                    Log.i("leilei", "onnnext" + wMessages.get(wMessages.size() - 1).getContent());
+                                    //简单的输出一下;
+                                    for (WMessage message : wmsgsText) {
+                                        Log.i("leilei",message.getContent()) ;
+                                    }
                                 }
                             }
 
@@ -690,7 +686,6 @@ public class Service1 extends BaseService implements INetResult{
                             }
 
                             if(wmsgsText!=null&&wmsgsText.size()>0){
-                                Log.i("szhua",wmsgsText.get(wmsgsText.size()-1).getCreateTime()) ;
                                 uploadChatLogsDao.uploadChatLogs("shuweineng888",AppHolder.getInstance().getToken(),wmsgsText,"","");
                             }
                             /**
@@ -714,9 +709,6 @@ public class Service1 extends BaseService implements INetResult{
             ArrayList<WMessage> ws = new ArrayList<>();
             wMessage.setContent(fileRe.getFilepath());
             ws.add(wMessage);
-            Log.i("leilei",wMessage.getTalker());
-            Log.i("leilei",wMessage.getImgPath());
-            Log.i("leilei",fileRe.getFilepath());
             uploadChatLogsDao.uploadChatLogs("shuweineng888", AppHolder.getInstance().getToken(), ws, fileRe.getFilesize(), fileRe.getServer());
             if(wmsgsFile.size()>0){
                 handlerUploadFile.sendEmptyMessage(0);
@@ -747,5 +739,4 @@ public class Service1 extends BaseService implements INetResult{
          * 没有网络连接 ；
          */
     }
-
 }

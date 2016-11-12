@@ -51,7 +51,7 @@ public class CollectFragment extends BaseLoadMoreListFragment implements DateCha
             HomeEntity post = new HomeEntity(imgUrls);
             homeEntities.add(post);
         }
-        homeListAdapter.setHomeEntities(homeEntities);
+   //     homeListAdapter.setHomeEntities(homeEntities);
     }
 
     @Override
@@ -66,14 +66,11 @@ public class CollectFragment extends BaseLoadMoreListFragment implements DateCha
 
     @Override
     public void loadMore() {
-
     }
-
     @Override
     public void refresh() {
 
     }
-
     @Override
     public void onItemClick(int position) {
 

@@ -56,6 +56,7 @@ public class GetMaterialTagsDao extends IDao {
                      String key =  keys.next() ;
                      Log.i("szhua",key);
                      String value =jsonObject.getString(key);
+                     Log.i("szhua",value);
                      Tag tag =new Tag();
                      tag.setType(key);
                      tag.setName(value);

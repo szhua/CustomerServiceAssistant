@@ -10,6 +10,7 @@ import android.text.TextUtils;
 import com.pcjh.assistant.entity.Label;
 import com.pcjh.assistant.entity.LabelConact;
 import com.pcjh.assistant.entity.RConact;
+import com.pcjh.assistant.entity.Tag;
 import com.pcjh.assistant.entity.Users;
 
 import java.util.ArrayList;
@@ -50,6 +51,31 @@ public class DbManager {
             db.endTransaction(); // 结束事务
         }
     }
+
+    public void addTags(List<Tag> tags){
+        db.beginTransaction();
+        try
+        {
+            for (Tag tag : tags)
+            {
+                db.execSQL("INSERT INTO " + DatabaseHelper.TABLE_NAME_TAG +"('type' , 'name' )"
+                        + " VALUES(?, ? )", new Object[]{tag.getType(), tag.getName()});
+                // 带两个参数的execSQL()方法，采用占位符参数？，把参数值放在后面，顺序对应
+                // 一个参数的execSQL()方法中，用户输入特殊字符时需要转义
+                // 使用占位符有效区分了这种情况
+            }
+            db.setTransactionSuccessful(); // 设置事务成功完成
+        }
+        finally
+        {
+            db.endTransaction(); // 结束事务
+        }
+
+
+
+
+    }
+
 
 
     public void addLabel(List<Label> labels){
@@ -148,21 +174,24 @@ public class DbManager {
         }
     }
 
-    public void deleteLabelConacts(ArrayList<LabelConact> labelConacts){
-
-        for (LabelConact labelConact : labelConacts) {
-            db.delete(DatabaseHelper.TABLE_NAME_LABELCONACT,"username = ?",new String []{labelConact.getRconact().getUsername()}) ;
+    public void deleteTags (ArrayList<Tag> tags){
+        for (Tag tag : tags) {
+            db.delete(DatabaseHelper.TABLE_NAME_TAG,"name = ?" ,new String[]{tag.getName()});
         }
     }
 
+    public void deleteLabelConacts(ArrayList<LabelConact> labelConacts){
+
+        for (LabelConact labelConact : labelConacts) {
+            db.delete(DatabaseHelper.TABLE_NAME_LABELCONACT,"username = ? and labelid = ? ",new String []{labelConact.getRconact().getUsername(),labelConact.getLabel().getLabelID()}) ;
+        }
+    }
 
     public void deleteLabels(ArrayList<Label> labels){
         for (Label label : labels) {
             db.delete(DatabaseHelper.TABLE_NAME_LABEL,"labelid = ?",new String []{label.getLabelID()});
         }
     }
-
-
 
     /**
      * delete old person
@@ -174,6 +203,23 @@ public class DbManager {
         db.delete(DatabaseHelper.TABLE_NAME_User, "uin == ?",
                 new String[] { String.valueOf(person.getUin()) });
     }
+
+
+    public List<Tag> queryTag(){
+
+        ArrayList<Tag> tags =new ArrayList<Tag>() ;
+        Cursor c = queryTheCursor(DatabaseHelper.TABLE_NAME_TAG);
+        while (c.moveToNext())
+        {
+            Tag tag =new Tag() ;
+            String name =c.getString(c.getColumnIndex("name")) ;
+            String type =c.getString(c.getColumnIndex("type")) ;
+            tags.add(tag) ;
+        }
+        c.close();
+        return tags;
+    }
+
 
     public List<LabelConact> queryLabelConact(){
 

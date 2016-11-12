@@ -7,6 +7,8 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,6 +21,8 @@ import android.widget.Toast;
 import com.pcjh.assistant.R;
 import com.pcjh.assistant.activity.CheckPhotoActivity;
 import com.pcjh.assistant.entity.HomeEntity;
+import com.pcjh.assistant.entity.Image;
+import com.pcjh.assistant.entity.Matrial;
 import com.pcjh.liabrary.ninegridimgview.NineGridImageView;
 import com.pcjh.liabrary.ninegridimgview.NineGridImageViewAdapter;
 import com.squareup.picasso.Picasso;
@@ -27,7 +31,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import butterknife.ButterKnife;
@@ -47,12 +53,12 @@ public class HomeListAdapter extends RecyclerView.Adapter {
 
     private Context context;
     private LayoutInflater inflater;
-    private ArrayList<HomeEntity> homeEntities = new ArrayList<HomeEntity>();
     private int  IMAGE_NAME;
+    private ArrayList<Matrial> matrialArrayList =new ArrayList<>() ;
 
 
-    public void setHomeEntities(ArrayList<HomeEntity> homeEntities) {
-        this.homeEntities = homeEntities;
+    public void setMatrialArrayList(ArrayList<Matrial> matrialArrayList) {
+        this.matrialArrayList = matrialArrayList;
         notifyDataSetChanged();
     }
 
@@ -80,7 +86,7 @@ public class HomeListAdapter extends RecyclerView.Adapter {
     @Override
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, int position) {
         final HomeListHolder homeListHolder = (HomeListHolder) holder;
-        homeListHolder.bind(homeEntities.get(position));
+        homeListHolder.bind(matrialArrayList.get(position));
         homeListHolder.collectBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -146,14 +152,11 @@ public class HomeListAdapter extends RecyclerView.Adapter {
             }
         });
 
-        if(homeEntities.size()==1){
-            ((HomeListHolder) holder).nineGridView.setSingleImgSize(500);
-        }
     }
 
     @Override
     public int getItemCount() {
-        return homeEntities.size();
+        return matrialArrayList.size();
     }
 
     static class HomeListHolder extends RecyclerView.ViewHolder {
@@ -184,15 +187,18 @@ public class HomeListAdapter extends RecyclerView.Adapter {
             super(view);
             ButterKnife.inject(this, view);
             nineGridView.setAdapter(mAdapter);
-
         }
 
-        private NineGridImageViewAdapter<String> mAdapter = new NineGridImageViewAdapter<String>() {
+        private NineGridImageViewAdapter<Image> mAdapter = new NineGridImageViewAdapter<Image>() {
             @Override
-            protected void onDisplayImage(Context context, ImageView imageView, String s) {
+            protected void onDisplayImage(Context context, ImageView imageView, Image s) {
+
+             String path ="http://"+s.getServer()+s.getPath() ;
                 Picasso.with(context)
-                        .load(s)
+                        .load(path)
                         .placeholder(R.mipmap.ic_launcher)
+                        .resize(300,300)
+                        .centerCrop()
                         .into(imageView);
             }
 
@@ -201,15 +207,26 @@ public class HomeListAdapter extends RecyclerView.Adapter {
                 return super.generateImageView(context);
             }
             @Override
-            protected void onItemImageClick(Context context, int index, List<String> list) {
+            protected void onItemImageClick(Context context, int index, List<Image> list) {
                 Toast.makeText(context, "image position is " + index, Toast.LENGTH_SHORT).show();
                 Intent intent =new Intent(context, CheckPhotoActivity.class) ;
                 context.startActivity(intent);
             }
         };
+        public void bind(Matrial matrial) {
+            nineGridView.setImagesData(matrial.getImages());
+            if(!TextUtils.isEmpty(matrial.getContent()))
+            content.setText(matrial.getContent());
+         try{
 
-        public void bind(HomeEntity homeEntity) {
-            nineGridView.setImagesData(homeEntity.getmImgUrlList());
+             long da =Long.parseLong(matrial.getAdd_time());
+             Date date =new Date(da) ;
+             SimpleDateFormat dateFormat =new SimpleDateFormat("yyyy-MM-dd hh:mm");
+             String result =dateFormat.format(date);
+             this.date.setText(result);
+         }catch (Exception e){
+
+         }
         }
 
 
