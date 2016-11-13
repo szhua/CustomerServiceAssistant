@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+        <LinearLayout
+            android:background="@color/white"
+            android:id="@+id/tag_selected_container"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <View
+                    android:background="@color/themecolor"
+                    android:layout_width="@dimen/common3dp"
+                    android:layout_marginTop="@dimen/common8dp"
+                    android:layout_marginBottom="@dimen/common8dp"
+                    android:layout_marginLeft="@dimen/common16dp"
+                    android:layout_height="@dimen/common30dp">
+                </View>
+
+                <TextView
+                    android:text="我的标签"
+                    android:gravity="center_vertical"
+                    android:layout_width="match_parent"
+                    android:textSize="@dimen/text_size_18sp"
+                    android:textColor="@color/text_color_normal"
+                    android:layout_marginLeft="@dimen/common16dp"
+                    android:layout_height="@dimen/common46dp" />
+            </LinearLayout>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="2px"
+                android:layout_marginLeft="@dimen/common16dp"
+                android:background="@color/divider_color_tag"
+                android:layout_marginRight="@dimen/common16dp"
+                ></View>
+
+            <com.pcjh.assistant.util.NoScrollGridView
+                android:id="@+id/select_tag_view"
+                android:numColumns="4"
+                android:scrollbars="none"
+                android:layout_marginLeft="@dimen/common6dp"
+                android:layout_marginRight="@dimen/common16dp"
+                android:layout_marginBottom="@dimen/common20dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"></com.pcjh.assistant.util.NoScrollGridView>
+
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:background="@color/divider_color_tag"
+            ></View>
+
+
+        <LinearLayout
+            android:layout_marginTop="@dimen/common10dp"
+            android:id="@+id/tag_all_container"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <View
+                    android:background="@color/themecolor"
+                    android:layout_width="@dimen/common3dp"
+                    android:layout_marginTop="@dimen/common8dp"
+                    android:layout_marginBottom="@dimen/common8dp"
+                    android:layout_marginLeft="@dimen/common16dp"
+                    android:layout_height="@dimen/common30dp">
+                </View>
+
+                <TextView
+                    android:text="所有标签"
+                    android:gravity="center_vertical"
+                    android:layout_width="match_parent"
+                    android:textSize="@dimen/text_size_18sp"
+                    android:textColor="@color/text_color_normal"
+                    android:layout_marginLeft="@dimen/common16dp"
+                    android:layout_height="@dimen/common46dp" />
+
+            </LinearLayout>
+
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="2px"
+                android:layout_marginLeft="@dimen/common16dp"
+                android:background="@color/divider_color_tag"
+                android:layout_marginRight="@dimen/common16dp"
+                ></View>
+
+            <com.pcjh.assistant.util.NoScrollGridView
+                android:id="@+id/all_tag_recycleView"
+                android:numColumns="4"
+                android:scrollbars="none"
+                android:listSelector="@null"
+                android:layout_marginLeft="@dimen/common6dp"
+                android:layout_marginRight="@dimen/common16dp"
+                android:layout_width="match_parent"
+                android:layout_marginBottom="@dimen/common30dp"
+                android:layout_height="wrap_content"></com.pcjh.assistant.util.NoScrollGridView>
+        </LinearLayout>
+
+
+
+</LinearLayout>

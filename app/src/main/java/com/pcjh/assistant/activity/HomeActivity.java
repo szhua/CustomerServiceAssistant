@@ -3,6 +3,7 @@ package com.pcjh.assistant.activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -50,7 +51,7 @@ public class HomeActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
               Intent intent =new Intent(HomeActivity.this,AddTagActivity.class) ;
-              startActivity(intent);
+              startActivityForResult(intent,101);
             }
         });
         getMaterialTagsDao.getMatrialTag("shuweineng888", AppHolder.getInstance().getToken());
@@ -84,34 +85,36 @@ public class HomeActivity extends BaseActivity {
             DbManager dbManager =new DbManager(this) ;
             if(SharedPrefsUtil.getValue(this,"isFirstPutTags",true)){
                 dbManager.addTags(tags);
+                SharedPrefsUtil.putValue(this,"isFirstPutTags",false);
             }else{
                 /**
                  * 两者进行比较，然后设置tab ;
+                 * （增加的不作处理）
                  */
              ArrayList<Tag> tagArrayList = (ArrayList<Tag>) dbManager.queryTag();
-             ArrayList<Tag> tagAdded =new ArrayList<>() ;
-                ArrayList<Tag> tagLess =new ArrayList<>() ;
+         //     ArrayList<Tag> tagAdded =new ArrayList<>() ;
+             ArrayList<Tag> tagLess =new ArrayList<>() ;
                 /**
-                 * 若是现在的没有原来的那么即是增加了；
+                 * 现在有，原来没有，增加了；（暂定不作处理；）
                  */
-                for (Tag tag : tags) {
-                    boolean ishas =false;
-                    for (Tag tag1 : tagArrayList) {
-                        if(tag1.getName().equals(tag)){
-                            ishas =true ;
-                        }
-                    }
-                    if(!ishas) {
-                        tagAdded.add(tag);
-                    }
-                }
+//              for (Tag tag : tags) {
+//                    boolean ishas =false;
+//                    for (Tag tag1 : tagArrayList) {
+//                        if(tag1.getName().equals(tag.getName())){
+//                            ishas =true ;
+//                        }
+//                    }
+//                    if(!ishas) {
+//                        tagAdded.add(tag);
+//                    }
+//                }
                 /**
-                 * 若是现在的没有原来的那么就是减少了;
+                 * 原来有，现在没有，减少了
                  */
                 for (Tag tag : tagArrayList) {
                     boolean ishas =false ;
                     for (Tag tag1 : tags) {
-                        if(tag1.getName().equals(tag)){
+                        if(tag1.getName().equals(tag.getName())){
                             ishas =true ;
                         }
                     }
@@ -119,26 +122,31 @@ public class HomeActivity extends BaseActivity {
                         tagLess.add(tag);
                     }
                 }
-
-                if(tagAdded.size()>0){
-                    dbManager.addTags(tagAdded);
-                }
                 if(tagLess.size()>0){
                   dbManager.deleteTags(tagLess);
                 }
                 tags = (ArrayList<Tag>) dbManager.queryTag();
             }
-
             ArrayList<String> mTitles =new ArrayList<String>() ;
+            homeFragments.clear();
             for (Tag tag : tags) {
                 homeFragments.add(HomeFragment.getInstance(tag.getName(),tag.getType()));
-                mTitles.add(tag.getName()) ;
+                mTitles.add(tag.getName());
             }
+
             mAdapter = new HomePagerAdapter(getSupportFragmentManager());
             mAdapter.setmTitles(mTitles);
             mAdapter.setHomeFragments(homeFragments);
             viewpager.setAdapter(mAdapter);
             slidingtablayout.setViewPager(viewpager);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode==101&&resultCode==RESULT_OK){
+          getMaterialTagsDao.getMatrialTag("shuweineng888",AppHolder.getInstance().getToken());
         }
     }
 }

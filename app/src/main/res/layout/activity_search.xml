@@ -14,16 +14,6 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="@dimen/tab_height">
-        <ImageView
-            android:background="@color/white"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:src="@drawable/add_icon"
-            android:id="@+id/add_icon"
-            android:paddingRight="@dimen/common10dp"
-            android:paddingLeft="@dimen/common12dp"
-            android:layout_alignParentRight="true"
-            />
         <com.pcjh.liabrary.tablayout.SlidingTabLayout
             android:layout_toLeftOf="@id/add_icon"
             android:id="@+id/slidingtablayout"

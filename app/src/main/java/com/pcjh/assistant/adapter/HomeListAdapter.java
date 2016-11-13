@@ -20,6 +20,7 @@ import android.widget.Toast;
 
 import com.pcjh.assistant.R;
 import com.pcjh.assistant.activity.CheckPhotoActivity;
+import com.pcjh.assistant.db.DbManager;
 import com.pcjh.assistant.entity.HomeEntity;
 import com.pcjh.assistant.entity.Image;
 import com.pcjh.assistant.entity.Matrial;
@@ -86,7 +87,7 @@ public class HomeListAdapter extends RecyclerView.Adapter {
     @Override
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, int position) {
         final HomeListHolder homeListHolder = (HomeListHolder) holder;
-        homeListHolder.bind(matrialArrayList.get(position));
+        homeListHolder.bind(matrialArrayList.get(position),context);
         homeListHolder.collectBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -213,12 +214,52 @@ public class HomeListAdapter extends RecyclerView.Adapter {
                 context.startActivity(intent);
             }
         };
-        public void bind(Matrial matrial) {
+        public void bind(final Matrial matrial , final Context context) {
             nineGridView.setImagesData(matrial.getImages());
             if(!TextUtils.isEmpty(matrial.getContent()))
             content.setText(matrial.getContent());
-         try{
+            final DbManager dbManager =new DbManager(context);
+            final boolean iscollected =dbManager.checkIsCollect(matrial.getId());
+          try{
+              if(iscollected){
+                  collectIcon.setImageResource(R.drawable.collect);
+                  collectNum.setTextColor(context.getResources().getColor(R.color.collect_color_un));
+              }else{
+                  collectIcon.setImageResource(R.drawable.collect_un);
+                  collectNum.setTextColor(context.getResources().getColor(R.color.collect_color));
+              }
+          }catch (Exception e){
 
+          }
+
+            collectBt.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                  if(iscollected){
+                      dbManager.deleteMatrial(matrial);
+                      collectIcon.setImageResource(R.drawable.collect_un);
+                      collectNum.setTextColor(context.getResources().getColor(R.color.collect_color));
+                  }else{
+                      SimpleDateFormat simpleDateFormat =new SimpleDateFormat("yyyy-MM-dd");
+                      String createtime =simpleDateFormat.format(new Date());
+                      dbManager.addCollectMatrial(matrial,createtime);
+                      collectIcon.setImageResource(R.drawable.collect);
+                      collectNum.setTextColor(context.getResources().getColor(R.color.collect_color_un));
+                  }
+
+                }
+            });
+
+
+
+
+
+
+
+
+
+
+         try{
              long da =Long.parseLong(matrial.getAdd_time());
              Date date =new Date(da) ;
              SimpleDateFormat dateFormat =new SimpleDateFormat("yyyy-MM-dd hh:mm");

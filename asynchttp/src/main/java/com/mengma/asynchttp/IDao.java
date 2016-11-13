@@ -213,7 +213,6 @@ public abstract class IDao {
                     if (node.findValue("msg") != null) {
                         errorInfo = node.findValue("msg").asText();
                     }
-
                     if (node.findValue("error_code") != null) {
                         error_code = node.findValue("error_code").asInt();
                     }

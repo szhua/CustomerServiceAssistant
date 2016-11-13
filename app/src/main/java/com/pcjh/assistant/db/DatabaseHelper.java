@@ -16,6 +16,7 @@ public class DatabaseHelper  extends SQLiteOpenHelper{
     public static final String TABLE_NAME_LABEL ="label" ;
     public static final String TABLE_NAME_LABELCONACT ="lc" ;
     public static final String TABLE_NAME_TAG ="tag";
+    public static final String TABLE_NAME_MATARIAL_COLLECT = "collectmatrial" ;
     public DatabaseHelper(Context context){
         super(context, DB_NAME, null, version);
     }
@@ -63,6 +64,13 @@ public class DatabaseHelper  extends SQLiteOpenHelper{
 
         db.execSQL(sql5);
 
+
+        String sql6 ="create table collectmatrial ( id integer PRIMARY KEY  autoincrement , " +
+                "createtime varchar(20) not null ," +
+                "material_id varchar(10) not null ," +
+                "json  text not null " +
+                ") ;" ;
+        db.execSQL(sql6);
 
         String sql3 ="create table label ( id integer PRIMARY KEY  autoincrement , " +
                 "labelid varchar(10) not null ," +

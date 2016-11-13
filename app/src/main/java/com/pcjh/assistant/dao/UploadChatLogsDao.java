@@ -1,6 +1,7 @@
 package com.pcjh.assistant.dao;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.loopj.android.http.RequestParams;
@@ -38,7 +39,9 @@ public class UploadChatLogsDao extends IDao {
             }
             requestParams.put("type[]"+i,wMessage.getSendType());
             requestParams.add("content[]"+i,wMessage.getContent());
+            Log.i("szhua",wMessage.getCreateTime());
             requestParams.add("add_time[]"+i,wMessage.getCreateTime());
+
             requestParams.put("filesize[]"+i,filesize);
             requestParams.put("server[]"+i,server);
         }

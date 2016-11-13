@@ -7,10 +7,17 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import com.mengma.asynchttp.JsonUtil;
+import com.mengma.asynchttp.RequestCode;
 import com.pcjh.assistant.R;
 import com.pcjh.assistant.adapter.HomePagerAdapter;
+import com.pcjh.assistant.base.AppHolder;
 import com.pcjh.assistant.base.BaseActivity;
+import com.pcjh.assistant.dao.GetMaterialTagsDao;
+import com.pcjh.assistant.db.DbManager;
+import com.pcjh.assistant.entity.Tag;
 import com.pcjh.assistant.fragment.HomeFragment;
+import com.pcjh.assistant.util.SharedPrefsUtil;
 import com.pcjh.liabrary.tablayout.SlidingTabLayout;
 
 import java.util.ArrayList;
@@ -28,40 +35,39 @@ public class SearchActivity extends BaseActivity {
     SlidingTabLayout slidingtablayout;
     @InjectView(R.id.viewpager)
     ViewPager viewpager;
-    @InjectView(R.id.add_icon)
-    ImageView addIcon;
 
     private ArrayList<HomeFragment> homeFragments = new ArrayList<>();
-    private final String[] mTitles = {"全部",
-            "肠胃", "皮炎", "肠炎"
-            , "便秘", "糖尿病"
-    };
+
     private HomePagerAdapter mAdapter;
 
+    private GetMaterialTagsDao getMaterialTagsDao =new GetMaterialTagsDao(this,this) ;
+    private ArrayList<Tag> tags =new ArrayList<>();
+
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_search);
         ButterKnife.inject(this);
-
-
-//        for (String title : mTitles) {
-//            homeFragments.add(HomeFragment.getInstance(title));
-//        }
-//        mAdapter = new HomePagerAdapter(getSupportFragmentManager());
-//        mAdapter.setmTitles(mTitles);
-//        mAdapter.setHomeFragments(homeFragments);
-//        viewpager.setAdapter(mAdapter);
-//        slidingtablayout.setViewPager(viewpager);
-//
-//        addIcon.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                Intent intent =new Intent(SearchActivity.this,AddTagActivity.class) ;
-//                startActivity(intent);
-//            }
-//        });
-
-
+        getMaterialTagsDao.getMatrialTag("shuweineng888", AppHolder.getInstance().getToken());
+    }
+    @Override
+    public void onRequestSuccess(int requestCode) {
+        super.onRequestSuccess(requestCode);
+        if(requestCode== RequestCode.CODE_0){
+            tags = (ArrayList<Tag>) getMaterialTagsDao.getTags();
+            ArrayList<String> mTitles =new ArrayList<String>() ;
+            homeFragments.clear();
+            for (Tag tag : tags) {
+                homeFragments.add(HomeFragment.getInstance(tag.getName(),tag.getType()));
+                mTitles.add(tag.getName());
+            }
+            mAdapter = new HomePagerAdapter(getSupportFragmentManager());
+            mAdapter.setmTitles(mTitles);
+            mAdapter.setHomeFragments(homeFragments);
+            viewpager.setAdapter(mAdapter);
+            slidingtablayout.setViewPager(viewpager);
+        }
     }
 }

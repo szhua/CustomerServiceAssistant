@@ -138,26 +138,26 @@ public class Service1 extends BaseService implements INetResult{
         public void handleMessage(Message msg) {
 
             if(wmsgsFile.get(0)!=null){
-                wMessage =wmsgsFile.get(0) ;
+                WMessage wMessage =wmsgsFile.get(0) ;
+                uploadChatFileDaoFirst.setwMessage(wMessage);
                 wmsgsFile.remove(wMessage);
                 uploadChatFileDaoFirst.uploadChatFile("shuweineng888",AppHolder.getInstance().getToken(),wMessage.getFile(),wMessage.getMsgId());
             }
         }
     } ;
     private UploadChatFileDaoFirst uploadChatFileDaoFirst =new UploadChatFileDaoFirst(this,this) ;
-    private WMessage  wMessage;
 
     /**
-     * 实现轮循上传文件的机制 ；
+     * 实现轮循上传文件的机制；
      */
     private ArrayList<WMessage> wmsgsFileTimer ;
-    private WMessage  wMessageTimer;
     private Handler handlerUploadFileTimer =new Handler(){
         @Override
         public void handleMessage(Message msg) {
 
             if(wmsgsFileTimer.get(0)!=null){
-                wMessageTimer =wmsgsFileTimer.get(0) ;
+                WMessage   wMessageTimer =wmsgsFileTimer.get(0) ;
+                uploadChatFileDaoTimer.setwMessage(wMessageTimer);
                 wmsgsFileTimer.remove(wMessageTimer);
                 uploadChatFileDaoTimer.uploadChatFile("shuweineng888",AppHolder.getInstance().getToken(),wMessageTimer.getFile(),wMessageTimer.getMsgId());
             }
@@ -345,9 +345,11 @@ public class Service1 extends BaseService implements INetResult{
 
                             if(wmsgsFile!=null&&wmsgsFile.size()>0){
                                 if(wmsgsFile.get(0)!=null){
-                                    wMessage =wmsgsFile.get(0) ;
+                                    WMessage wMessage =wmsgsFile.get(0);
                                     wmsgsFile.remove(wMessage);
+                                    uploadChatFileDaoFirst.setwMessage(wMessage);
                                     uploadChatFileDaoFirst.uploadChatFile("shuweineng888",AppHolder.getInstance().getToken(),wMessage.getFile(),wMessage.getMsgId());
+
                                 }
                             }
 
@@ -673,13 +675,16 @@ public class Service1 extends BaseService implements INetResult{
                                     //简单的输出一下;
                                     for (WMessage message : wmsgsText) {
                                         Log.i("leilei",message.getContent()) ;
+                                        Log.i("leilei",message.getCreateTime()) ;
                                     }
                                 }
                             }
 
                             if(wmsgsFileTimer!=null&&wmsgsFileTimer.size()>0){
+
                                 if(wmsgsFileTimer.get(0)!=null){
-                                    wMessageTimer =wmsgsFileTimer.get(0) ;
+                                    WMessage wMessageTimer =wmsgsFileTimer.get(0);
+                                    uploadChatFileDaoTimer.setwMessage(wMessageTimer);
                                     wmsgsFileTimer.remove(wMessageTimer);
                                     uploadChatFileDaoTimer.uploadChatFile("shuweineng888",AppHolder.getInstance().getToken(),wMessageTimer.getFile(),wMessageTimer.getMsgId());
                                 }
@@ -689,7 +694,7 @@ public class Service1 extends BaseService implements INetResult{
                                 uploadChatLogsDao.uploadChatLogs("shuweineng888",AppHolder.getInstance().getToken(),wmsgsText,"","");
                             }
                             /**
-                             * 上传文件；
+                             *设置最后一次上传的时间；以便于下次请求;
                              */
                             long lastCreateTime = Long.parseLong(wMessages.get(wMessages.size() - 1).getCreateTime());
                             SharedPrefsUtil.putValue(getBaseContext(),"lastCreateTime",lastCreateTime);
@@ -707,6 +712,7 @@ public class Service1 extends BaseService implements INetResult{
         if(requestCode== RequestCode.UPLOADFILE1){
             FileReturnEntity fileRe =uploadChatFileDaoFirst.getFileReturnEntity() ;
             ArrayList<WMessage> ws = new ArrayList<>();
+            WMessage wMessage =uploadChatFileDaoFirst.getwMessage() ;
             wMessage.setContent(fileRe.getFilepath());
             ws.add(wMessage);
             uploadChatLogsDao.uploadChatLogs("shuweineng888", AppHolder.getInstance().getToken(), ws, fileRe.getFilesize(), fileRe.getServer());
@@ -716,6 +722,7 @@ public class Service1 extends BaseService implements INetResult{
         }
         if(requestCode== RequestCode.UPLOADFILE){
             FileReturnEntity fileRe =uploadChatFileDaoTimer.getFileReturnEntity() ;
+            WMessage wMessageTimer =uploadChatFileDaoTimer.getwMessage();
             ArrayList<WMessage> ws = new ArrayList<>();
             wMessageTimer.setContent(fileRe.getFilepath());
             ws.add(wMessageTimer);

@@ -5,14 +5,18 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
+import android.util.Log;
 
 
+import com.mengma.asynchttp.JsonUtil;
 import com.pcjh.assistant.entity.Label;
 import com.pcjh.assistant.entity.LabelConact;
+import com.pcjh.assistant.entity.Matrial;
 import com.pcjh.assistant.entity.RConact;
 import com.pcjh.assistant.entity.Tag;
 import com.pcjh.assistant.entity.Users;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,14 +56,35 @@ public class DbManager {
         }
     }
 
+
+    public void addCollectMatrial(Matrial matrial ,String createtime){
+        db.beginTransaction();
+        try {
+            db.execSQL("INSERT INTO " + DatabaseHelper.TABLE_NAME_MATARIAL_COLLECT +"( 'createtime' , 'material_id','json' )"
+                    + " VALUES(? , ? , ? )", new Object[]{createtime, matrial.getId(), JsonUtil.pojo2json(matrial)});
+            db.setTransactionSuccessful(); // 设置事务成功完成
+        } catch (IOException e) {
+            e.printStackTrace();
+        }finally {
+            db.endTransaction();
+        }
+    }
+
+
+
+
+
+
     public void addTags(List<Tag> tags){
         db.beginTransaction();
         try
         {
             for (Tag tag : tags)
             {
-                db.execSQL("INSERT INTO " + DatabaseHelper.TABLE_NAME_TAG +"('type' , 'name' )"
-                        + " VALUES(?, ? )", new Object[]{tag.getType(), tag.getName()});
+
+                Log.i("szhua","tagname"+tag.getName());
+                db.execSQL("INSERT INTO " + DatabaseHelper.TABLE_NAME_TAG +"( 'type' , 'name' )"
+                        + " VALUES(? , ?)", new Object[]{tag.getType(), tag.getName()});
                 // 带两个参数的execSQL()方法，采用占位符参数？，把参数值放在后面，顺序对应
                 // 一个参数的execSQL()方法中，用户输入特殊字符时需要转义
                 // 使用占位符有效区分了这种情况
@@ -70,11 +95,11 @@ public class DbManager {
         {
             db.endTransaction(); // 结束事务
         }
-
-
-
-
     }
+
+
+
+
 
 
 
@@ -187,6 +212,59 @@ public class DbManager {
         }
     }
 
+    public void deleteMatrial(Matrial matrial){
+        db.delete(DatabaseHelper.TABLE_NAME_MATARIAL_COLLECT,"material_id = ?" ,new String[]{matrial.getId()});
+    }
+
+    public List<Matrial> queryCollectMatrials(String date){
+
+        ArrayList<Matrial> matrials =new ArrayList<>() ;
+        Cursor c = db.rawQuery("SELECT * FROM " + DatabaseHelper.TABLE_NAME_MATARIAL_COLLECT +" where createtime = "+date,
+                null);
+        while (c.moveToNext())
+        {
+            Matrial matrial =null;
+            String json =c.getString(c.getColumnIndex("json")) ;
+            try {
+                Matrial matrial1 =JsonUtil.json2pojo(json,Matrial.class) ;
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+            if (matrial!=null) {
+                matrials.add(matrial);
+            }
+        }
+        c.close();
+        return  matrials ;
+    }
+
+    public boolean checkIsCollect(String id){
+        Cursor c = db.rawQuery("SELECT * FROM " + DatabaseHelper.TABLE_NAME_MATARIAL_COLLECT +" where material_id = "+ id,
+                null);
+        ArrayList<Matrial> matrials =new ArrayList<>() ;
+        while (c.moveToNext())
+        {
+            Matrial matrial = null;
+            String  json =c.getString(c.getColumnIndex("json")) ;
+            try {
+            matrial=   JsonUtil.json2pojo(json,Matrial.class) ;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (matrial!=null) {
+                matrials.add(matrial);
+            }
+        }
+        c.close();
+        if(matrials.size()>0){
+            return  true ;
+        }
+        return  false ;
+    }
+
+
+
+
     public void deleteLabels(ArrayList<Label> labels){
         for (Label label : labels) {
             db.delete(DatabaseHelper.TABLE_NAME_LABEL,"labelid = ?",new String []{label.getLabelID()});
@@ -214,6 +292,8 @@ public class DbManager {
             Tag tag =new Tag() ;
             String name =c.getString(c.getColumnIndex("name")) ;
             String type =c.getString(c.getColumnIndex("type")) ;
+            tag.setName(name);
+            tag.setType(type);
             tags.add(tag) ;
         }
         c.close();
@@ -260,7 +340,6 @@ public class DbManager {
         c.close();
         return lables;
     }
-
 
 
     public List<RConact> quryForRconacts(){

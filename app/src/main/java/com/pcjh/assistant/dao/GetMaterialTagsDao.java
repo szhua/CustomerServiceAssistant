@@ -43,11 +43,17 @@ public class GetMaterialTagsDao extends IDao {
         requestParams.put("token",token);
         postRequest(Constant.BASE_URL+Constant.GET_MATERIAL_TAGS,requestParams, RequestCode.CODE_0);
     }
+    public void getMatrialTagSelected(String wx ,String token ){
+        RequestParams requestParams =new RequestParams();
+        requestParams.put("wx" ,wx);
+        requestParams.put("token",token);
+        postRequest(Constant.BASE_URL+Constant.GET_MATERIAL_TAGS,requestParams, RequestCode.CODE_1);
+    }
 
     @Override
     public void onRequestSuccess(JsonNode result, int requestCode) throws IOException {
 
-        if (requestCode== RequestCode.CODE_0) {
+        if (requestCode== RequestCode.CODE_0||requestCode==RequestCode.CODE_1) {
             JsonNode node =result.findValue("tags") ;
             try {
                 JSONObject jsonObject =new JSONObject(JsonUtil.node2json(node));

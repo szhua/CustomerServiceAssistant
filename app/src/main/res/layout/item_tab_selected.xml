@@ -19,6 +19,7 @@
            />
 
        <ImageView
+           android:id="@+id/delete_icon"
            android:layout_width="wrap_content"
            android:layout_height="wrap_content"
            android:src="@drawable/quit"
@@ -32,6 +33,7 @@
 
 
        <TextView
+           android:id="@+id/name"
            android:layout_width="wrap_content"
            android:layout_height="wrap_content"
            android:text="胃病"

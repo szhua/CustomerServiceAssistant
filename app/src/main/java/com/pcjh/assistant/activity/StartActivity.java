@@ -130,8 +130,6 @@ public class StartActivity extends BaseActivity implements INetResult{
         SharedPrefsUtil.putValue(StartActivity.this,"dbPath",users.getDbPath());
         SharedPrefsUtil.putValue(StartActivity.this,"token",token);
         SharedPrefsUtil.putValue(StartActivity.this,"wxid",AppHolder.getInstance().getUser().getWxId());
-        //SharedPrefsUtil.putValue(StartActivity.this,"wxid",AppHolder.getInstance().getUsers().getId());
-
 
         startService(new Intent(StartActivity.this,Service1.class));
 

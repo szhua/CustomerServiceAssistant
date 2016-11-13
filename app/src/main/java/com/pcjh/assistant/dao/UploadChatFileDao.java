@@ -23,18 +23,19 @@ import java.util.ArrayList;
 public class UploadChatFileDao extends IDao {
 
     FileReturnEntity fileReturnEntity  ;
-    ArrayList<WMessage> wMessages =new ArrayList<>();
-    public void addMsgArray(ArrayList<WMessage> wMessages){
-        this.wMessages.addAll(wMessages);
-    }
-    public void reoveMsg(WMessage wMessage){
-        wMessages.remove(wMessage);
-    }
-    public ArrayList<WMessage> getwMessages() {
-        return wMessages;
-    }
+
     public FileReturnEntity getFileReturnEntity() {
         return fileReturnEntity;
+    }
+
+    private WMessage wMessage  ;
+
+    public void setwMessage(WMessage wMessage) {
+        this.wMessage = wMessage;
+    }
+
+    public WMessage getwMessage() {
+        return wMessage;
     }
 
     public UploadChatFileDao(Context context, INetResult iNetResult) {
