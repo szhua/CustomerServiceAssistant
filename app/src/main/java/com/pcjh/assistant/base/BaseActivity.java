@@ -54,7 +54,7 @@ public class BaseActivity extends AppCompatActivity implements INetResult {
         super.onStart();
 
         searchBt = (ImageView) findViewById(R.id.search_bt);
-        collectBt = (ImageView) findViewById(R.id.collect_bt);
+        collectBt = (ImageView) findViewById(R.id.collect_btt);
         backBt = (ImageView) findViewById(R.id.back_bt);
         doneBt = (ImageView) findViewById(R.id.done_bt);
         if(backBt!=null){
@@ -82,7 +82,6 @@ public class BaseActivity extends AppCompatActivity implements INetResult {
             collectBt.setOnClickListener(listener);
         }
     }
-
     public void setBackBtListener(View.OnClickListener listener){
         if(backBt!=null){
             backBt.setOnClickListener(listener);

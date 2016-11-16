@@ -15,6 +15,7 @@ import com.pcjh.assistant.base.BaseActivity;
 import com.pcjh.assistant.dao.GetMaterialTagsDao;
 import com.pcjh.assistant.db.DbManager;
 import com.pcjh.assistant.entity.Tag;
+import com.pcjh.assistant.util.SharedPrefsUtil;
 import com.pcjh.assistant.util.TagView;
 
 import java.util.ArrayList;
@@ -37,8 +38,6 @@ public class AddTagActivity extends BaseActivity {
     ArrayList<Tag> tags = new ArrayList<>();
     ArrayList<Tag> tagsAll = new ArrayList<>();
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,7 +49,7 @@ public class AddTagActivity extends BaseActivity {
         tags = (ArrayList<Tag>) dbManager.queryTag();
 
         tagview.setTagsSelected(tags);
-        getMaterialTagsDao.getMatrialTag("shuweineng888", AppHolder.getInstance().getToken());
+        getMaterialTagsDao.getMatrialTag("shuweineng888", SharedPrefsUtil.getValue(this,"token",""));
 
 
         doneBt.setOnClickListener(new View.OnClickListener() {
@@ -67,7 +66,6 @@ public class AddTagActivity extends BaseActivity {
                 }
                 setResult(RESULT_OK);
                 finish();
-
             }
         });
     }

@@ -13,9 +13,11 @@ import com.pcjh.assistant.R;
 import com.pcjh.assistant.adapter.HomeListAdapter;
 import com.pcjh.assistant.base.AppHolder;
 import com.pcjh.assistant.base.BaseLoadMoreListFragment;
+import com.pcjh.assistant.dao.AddMaterialFavoriteCountDao;
 import com.pcjh.assistant.dao.GetMaterialListDao;
 import com.pcjh.assistant.entity.HomeEntity;
 import com.pcjh.assistant.entity.Matrial;
+import com.pcjh.assistant.util.SharedPrefsUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,41 +30,51 @@ public class HomeFragment extends BaseLoadMoreListFragment implements INetResult
 
 {
     private ArrayList<HomeEntity > homeEntities  =new ArrayList<>() ;
-    
-    private String[] IMG_URL_LIST = {
-            "http://ac-QYgvX1CC.clouddn.com/36f0523ee1888a57.jpg",
-            "http://ac-QYgvX1CC.clouddn.com/07915a0154ac4a64.jpg",
-            "http://ac-QYgvX1CC.clouddn.com/9ec4bc44bfaf07ed.jpg",
-            "http://ac-QYgvX1CC.clouddn.com/fa85037f97e8191f.jpg",
-            "http://ac-QYgvX1CC.clouddn.com/de13315600ba1cff.jpg",
-            "http://ac-QYgvX1CC.clouddn.com/15c5c50e941ba6b0.jpg",
-            "http://ac-QYgvX1CC.clouddn.com/10762c593798466a.jpg",
-            "http://ac-QYgvX1CC.clouddn.com/eaf1c9d55c5f9afd.jpg",
-            "http://ac-QYgvX1CC.clouddn.com/ad99de83e1e3f7d4.jpg",
-            "http://ac-QYgvX1CC.clouddn.com/233a5f70512befcc.jpg",
-    };
-
     private String type;
     private String title ;
     private HomeListAdapter homeListAdapter ;
     private GetMaterialListDao getMaterialListDao =new GetMaterialListDao(getContext(),this);
     private ArrayList<Matrial> matrialArrayList =new ArrayList<Matrial>() ;
+    private AddMaterialFavoriteCountDao addMaterialFavoriteCountDao =new AddMaterialFavoriteCountDao(getContext(),this) ;
+    private String words  ;
 
+    public void setWords(String words) {
+        this.words = words;
+    }
+
+    public String getWords() {
+        return words;
+    }
+    public void setSearchWords(String words){
+        this.words =words ;
+        getMaterialListDao.getMaterialList("shuweineng888", SharedPrefsUtil.getValue(getContext(),"token",""),type,words);
+    }
     public static HomeFragment getInstance(String title,String type){
         HomeFragment homeFragment =new HomeFragment() ;
         homeFragment.type =type ;
-        homeFragment.title =title ;
+        homeFragment.title =title;
         return homeFragment ;
     }
 
-
+    public void addMatrialFav(String matrial_id,int postion){
+    addMaterialFavoriteCountDao.addFavoriateCount("shuweineng888",SharedPrefsUtil.getValue(getContext(),"token",""),matrial_id,postion);
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getMaterialListDao.getMaterialList("shuweineng888", AppHolder.getInstance().getToken(),type);
         homeListAdapter =new HomeListAdapter(getContext());
         homeListAdapter.setMatrialArrayList(matrialArrayList);
+    }
+
+
+
+
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        getMaterialListDao.getMaterialList("shuweineng888", AppHolder.getInstance().getToken(),type);
     }
 
     @Override
@@ -80,10 +92,11 @@ public class HomeFragment extends BaseLoadMoreListFragment implements INetResult
     }
     @Override
     public void loadMore() {
+
     }
     @Override
     public void refresh() {
-
+        getMaterialListDao.getMaterialList("shuweineng888", AppHolder.getInstance().getToken(),type);
     }
     @Override
     public void onItemClick(int position) {
@@ -94,8 +107,14 @@ public class HomeFragment extends BaseLoadMoreListFragment implements INetResult
     public void onRequestSuccess(int requestCode) {
         super.onRequestSuccess(requestCode);
         if(requestCode== RequestCode.CODE_0){
-           matrialArrayList = (ArrayList<Matrial>) getMaterialListDao.getMatrials();
+            swipeRefreshLayout.setRefreshing(false);
+            matrialArrayList = (ArrayList<Matrial>) getMaterialListDao.getMatrials();
             homeListAdapter.setMatrialArrayList(matrialArrayList);
         }
+        if(requestCode==RequestCode.CODE_5){
+           matrialArrayList.get(addMaterialFavoriteCountDao.getPostion()).setFavorite_count(""+addMaterialFavoriteCountDao.getFavorite_count());
+            homeListAdapter.notifyDataSetChanged();
+        }
+
     }
 }

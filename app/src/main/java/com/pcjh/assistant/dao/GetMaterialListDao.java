@@ -31,6 +31,18 @@ public class GetMaterialListDao extends IDao {
         super(context, iNetResult);
     }
 
+    public void getMaterialList(String wx ,String token ,String tag_id,String words){
+        RequestParams requestParams =new RequestParams() ;
+        requestParams.put("wx",wx);
+        requestParams.put("token",token);
+        requestParams.put("tag_id",tag_id);
+        requestParams.put("keyword",words);
+        postRequest(Constant.BASE_URL+Constant.GET_MATERIAL_LIST,requestParams, RequestCode.CODE_0);
+    }
+
+
+
+
     public void getMaterialList(String wx ,String token ,String tag_id){
         RequestParams requestParams =new RequestParams() ;
         requestParams.put("wx",wx);

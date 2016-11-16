@@ -48,6 +48,7 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
 import rx.functions.Func3;
 import rx.functions.Func4;
+import rx.functions.Func5;
 import rx.schedulers.Schedulers;
 
 /**
@@ -154,7 +155,6 @@ public class Service1 extends BaseService implements INetResult{
     private Handler handlerUploadFileTimer =new Handler(){
         @Override
         public void handleMessage(Message msg) {
-
             if(wmsgsFileTimer.get(0)!=null){
                 WMessage   wMessageTimer =wmsgsFileTimer.get(0) ;
                 uploadChatFileDaoTimer.setwMessage(wMessageTimer);
@@ -164,13 +164,12 @@ public class Service1 extends BaseService implements INetResult{
         }
     } ;
     private UploadChatFileDao uploadChatFileDaoTimer =new UploadChatFileDao(this,this) ;
-
+    private Timer  timer1;
+    private Timer  timer2;
 
     @Override
     public void onCreate() {
         super.onCreate();
-
-
     }
 
     @Override
@@ -195,8 +194,8 @@ public class Service1 extends BaseService implements INetResult{
             if (SharedPrefsUtil.getValue(this, "isFirstGetData", true)) {
                 uploadMessageToServerFirst();
             } else {
-                Timer timer = new Timer();
-                timer.schedule(new TimerTask() {
+                timer1 = new Timer();
+                timer1.schedule(new TimerTask() {
                     @Override
                     public void run() {
                         handler.sendEmptyMessage(0);
@@ -208,7 +207,7 @@ public class Service1 extends BaseService implements INetResult{
 
     public void uploadMessageToServerFirst(){
         subscription =  Observable
-                .zip(getConnactLabelIds(users), getRconacts(users), getMessages(users),getRconactsForLabel(users), new Func4<List<Label>, List<RConact>, List<WMessage>,List<RConact> ,Object>() {
+                .zip(getConnactLabelIds(users), getRconacts(users), getMessages(users),getRconactsForLabel(users), new Func4<List<Label>, List<RConact>, List<WMessage>,List<RConact>  ,Object>() {
                     @Override
                     public Object call(List<Label> labels, List<RConact> conacts, List<WMessage> wMessages ,List<RConact> rConact) {
                         /**
@@ -293,7 +292,6 @@ public class Service1 extends BaseService implements INetResult{
                     @Override
                     public void onNext(Object o) {
 
-
                         Log.i("szhua",AppHolder.getInstance().getToken());
                         for (LabelGroup labelGroup : labelGroups) {
                             setFansTagDao.setFansTag("shuweineng888",AppHolder.getInstance().getToken(),labelGroup);
@@ -361,13 +359,18 @@ public class Service1 extends BaseService implements INetResult{
                          *设置下次访问的聊天时间 ；
                          */
                         SharedPrefsUtil.putValue(getBaseContext(),"lastCreateTime",Long.parseLong(data2.get(data2.size()-1).getCreateTime()));
+                        /**
+                         * 使用数据库更新用户的聊天信息 ;
+                         */
+                        DbManager dbManager =new DbManager(getBaseContext());
+                        dbManager.addUpdateTime(SharedPrefsUtil.getValue(getBaseContext(),"uin",""),data2.get(data2.size()-1).getCreateTime());
                         SharedPrefsUtil.putValue(getBaseContext(),"isFirstGetData",false);
                         /**
                          * 每60秒进行请求一次;
                          * 第一次请求延迟一些 ；
                          */
-                        Timer timer =new Timer() ;
-                        timer.schedule(new TimerTask() {
+                         timer2 =new Timer() ;
+                        timer2.schedule(new TimerTask() {
                             @Override
                             public void run() {
                                 handler.sendEmptyMessage(0) ;
@@ -379,9 +382,25 @@ public class Service1 extends BaseService implements INetResult{
 
     public void  getMessageTimer(){
         subscriptions =    Observable
-                .zip(getConnactLabelIds(users), getRconacts(users),getRconactsForLabel(users), new Func3<List<Label>, List<RConact>,List<RConact>, Object>() {
+                .zip(getConnactLabelIds(users), getRconacts(users),getRconactsForLabel(users),getUin(), new Func4<List<Label>, List<RConact>,List<RConact>,String, Object>() {
                     @Override
-                    public Object call(List<Label> labelss, List<RConact> conacts,List<RConact> labelRc) {
+                    public Object call(List<Label> labelss, List<RConact> conacts,List<RConact> labelRc,String uin) {
+                        /**
+                         * 若是用户切换账号的情况下 ;
+                         */
+                        if(!SharedPrefsUtil.getValue(getBaseContext(),"uin","").equals(uin)&&!TextUtils.isEmpty(uin)&&!uin.equals("0")){
+
+
+                            if(timer1!=null){
+                                timer1.cancel();
+                            }
+                            if(timer2!=null) {
+                                timer2.cancel();
+                            }
+                            subscriptions.unsubscribe();
+                            SharedPrefsUtil.putValue(getBaseContext(),"uin",uin);
+                            resetUsesrs();
+                        }
                         /**
                          * 现在的未进行过滤的联系人;
                          */
@@ -615,7 +634,9 @@ public class Service1 extends BaseService implements INetResult{
                 .flatMap(new Func1<Object, Observable<List<WMessage>>>() {
                     @Override
                     public Observable<List<WMessage>> call(Object o) {
-                        return getMessages(users, "" + SharedPrefsUtil.getValue(getBaseContext(),"lastCreateTime",0L));
+                        DbManager dbManager =new DbManager(getBaseContext()) ;
+                        String lasttime =dbManager.getUpdateTime(SharedPrefsUtil.getValue(getBaseContext(),"uin",""));
+                        return getMessages(users,lasttime);
                     }
                 })
                 .subscribeOn(AndroidSchedulers.mainThread())
@@ -695,9 +716,11 @@ public class Service1 extends BaseService implements INetResult{
                             }
                             /**
                              *设置最后一次上传的时间；以便于下次请求;
+                             * 更新用户的上传时间信息;
                              */
                             long lastCreateTime = Long.parseLong(wMessages.get(wMessages.size() - 1).getCreateTime());
-                            SharedPrefsUtil.putValue(getBaseContext(),"lastCreateTime",lastCreateTime);
+                            DbManager dbManager =new DbManager(getBaseContext()) ;
+                            dbManager.updateUpdateTime(SharedPrefsUtil.getValue(getBaseContext(),"uin",""),""+lastCreateTime);
 
                         }
                     }
@@ -707,8 +730,37 @@ public class Service1 extends BaseService implements INetResult{
     public IBinder onBind(Intent intent) {
         return null;
     }
+
+    @Override
+    protected void reGetMessage() {
+        Log.i("szhua","reGet") ;
+        users =new Users();
+        users.setDbPath( SharedPrefsUtil.getValue(getBaseContext(),"dbPath","d"));
+        users.setPassword( SharedPrefsUtil.getValue(getBaseContext(),"password","d"));
+        users.setUin( SharedPrefsUtil.getValue(getBaseContext(),"uin","d"));
+        String token = SharedPrefsUtil.getValue(getBaseContext(),"token","");
+        String wxid =    SharedPrefsUtil.getValue(getBaseContext(),"wxid","");
+        AppHolder.getInstance().setToken(token);
+        userInfo =new UserInfo() ;
+        userInfo.setWxId(wxid);
+        AppHolder.getInstance().setUser(userInfo);
+        if (SharedPrefsUtil.getValue(this, "isFirstGetData", true)) {
+            Log.i("szhua","first");
+            uploadMessageToServerFirst();
+        } else {
+            Log.i("szhua","second");
+            timer1 = new Timer();
+            timer1.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    handler.sendEmptyMessage(0);
+                }
+            }, 0, 60000);
+        }
+    }
     @Override
     public void onRequestSuccess(int requestCode) {
+        super.onRequestSuccess(requestCode);
         if(requestCode== RequestCode.UPLOADFILE1){
             FileReturnEntity fileRe =uploadChatFileDaoFirst.getFileReturnEntity() ;
             ArrayList<WMessage> ws = new ArrayList<>();
@@ -734,11 +786,6 @@ public class Service1 extends BaseService implements INetResult{
     }
     @Override
     public void onRequestError(int requestCode, String errorInfo, int error_code) {
-
-    }
-    @Override
-    public void onRequestFaild(String errorNo, String errorMessage) {
-
     }
     @Override
     public void onNoConnect() {

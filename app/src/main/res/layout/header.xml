@@ -34,7 +34,7 @@
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"/>
       <ImageView
-          android:id="@+id/collect_bt"
+          android:id="@+id/collect_btt"
           android:src="@drawable/collect_icon"
           android:paddingTop="@dimen/common10dp"
           android:paddingBottom="@dimen/common10dp"

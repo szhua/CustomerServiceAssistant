@@ -39,9 +39,7 @@ public class UploadChatLogsDao extends IDao {
             }
             requestParams.put("type[]"+i,wMessage.getSendType());
             requestParams.add("content[]"+i,wMessage.getContent());
-            Log.i("szhua",wMessage.getCreateTime());
-            requestParams.add("add_time[]"+i,wMessage.getCreateTime());
-
+            requestParams.add("add_time[]"+i,""+Long.parseLong(wMessage.getCreateTime())/1000);
             requestParams.put("filesize[]"+i,filesize);
             requestParams.put("server[]"+i,server);
         }

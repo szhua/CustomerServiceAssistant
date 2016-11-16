@@ -3,6 +3,7 @@ package com.pcjh.assistant.base;
 
 import com.pcjh.assistant.entity.UserInfo;
 import com.pcjh.assistant.entity.Users;
+import com.pcjh.assistant.util.SharedPrefsUtil;
 
 /**
  * Created by szhua on 2016/10/19.
@@ -26,10 +27,10 @@ public class AppHolder {
         this.token = token;
     }
 
-    public String getToken() {
+    public String getToken(){
+
         return token;
     }
-
     public Users getUsers() {
         return users;
     }

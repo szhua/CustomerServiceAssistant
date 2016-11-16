@@ -54,7 +54,7 @@ public class HomeActivity extends BaseActivity {
               startActivityForResult(intent,101);
             }
         });
-        getMaterialTagsDao.getMatrialTag("shuweineng888", AppHolder.getInstance().getToken());
+        getMaterialTagsDao.getMatrialTag("shuweineng888", SharedPrefsUtil.getValue(this,"token",""));
     }
 
     @Override
@@ -146,7 +146,7 @@ public class HomeActivity extends BaseActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode==101&&resultCode==RESULT_OK){
-          getMaterialTagsDao.getMatrialTag("shuweineng888",AppHolder.getInstance().getToken());
+          getMaterialTagsDao.getMatrialTag("shuweineng888",SharedPrefsUtil.getValue(this,"token",""));
         }
     }
 }

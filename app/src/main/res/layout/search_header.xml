@@ -26,6 +26,7 @@
          android:layout_height="wrap_content">
 
          <EditText
+             android:imeOptions="actionSearch"
              android:id="@+id/search_et"
              android:paddingBottom="@dimen/common6dp"
              android:paddingTop="@dimen/common6dp"

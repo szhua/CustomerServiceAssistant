@@ -15,6 +15,7 @@ public class RequestCode {
 
     public final static int UPLOADFILE =101 ;
     public final static int UPLOADFILE1 =102 ;
+    public final static int INITSUCESS =103 ;
 
     public final static int CODE_LOGIN = 100;  //登录
     public final static int CODE_CREATE_ORDER_DINGGOU = 101;

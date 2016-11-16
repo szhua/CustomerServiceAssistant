@@ -22,7 +22,7 @@ public abstract class BaseLoadMoreListFragment extends BaseFragment implements S
     private LinearLayoutManager layoutManager;
     protected static final int REFRESH_COMPLETE = 0;
     protected static final int LOAD_COMPLETE = 1;
-    private SwipeRefreshLayout swipeRefreshLayout ;
+    protected SwipeRefreshLayout swipeRefreshLayout ;
     /**
      * 获取子类的Adapter
      *

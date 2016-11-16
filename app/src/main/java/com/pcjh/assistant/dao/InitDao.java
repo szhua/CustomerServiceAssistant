@@ -35,13 +35,13 @@ public class InitDao extends IDao {
       public void get_token (String wx) {
           RequestParams params = new RequestParams();
           params.put("wx", wx);
-          postRequest(Constant.BASE_URL + Constant.GET_TOKEN, params, RequestCode.CODE_0);
+          postRequest(Constant.BASE_URL + Constant.GET_TOKEN, params, RequestCode.INITSUCESS);
       }
 
 
     @Override
     public void onRequestSuccess(JsonNode result, int requestCode) throws IOException {
-        if(requestCode==RequestCode.CODE_0){
+        if(requestCode==RequestCode.INITSUCESS){
          //   Log.i("szhua", JsonUtil.node2json(result));
             json =JsonUtil.node2json(result);
             token =result.findValue("token").asText() ;

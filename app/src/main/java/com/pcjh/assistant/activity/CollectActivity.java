@@ -3,6 +3,7 @@ package com.pcjh.assistant.activity;
 import android.app.DatePickerDialog;
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
+import android.util.Log;
 import android.view.View;
 import android.widget.CalendarView;
 import android.widget.DatePicker;
@@ -16,7 +17,9 @@ import com.pcjh.assistant.fragment.CollectFragment;
 import com.pcjh.assistant.interfer.DateChangedListener;
 import com.pcjh.liabrary.utils.UiUtil;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -42,10 +45,10 @@ public class CollectActivity extends BaseActivity {
         ButterKnife.inject(this);
         FragmentTransaction fm = getSupportFragmentManager().beginTransaction();
         collectFragment =new CollectFragment();
-        fm.add(R.id.fragmentcontainer, new CollectFragment());
+        fm.add(R.id.fragmentcontainer,collectFragment );
         fm.commit();
-    }
 
+    }
     @Override
     protected void onStart() {
         super.onStart();
@@ -57,13 +60,16 @@ public class CollectActivity extends BaseActivity {
                 new DatePickerDialog(CollectActivity.this,
                         // 绑定监听器
                         new DatePickerDialog.OnDateSetListener() {
-
                             @Override
                             public void onDateSet(DatePicker view, int year,
                                                   int monthOfYear, int dayOfMonth) {
-                                collectFragment.dateChanged("您选择了：" + year + "年" + monthOfYear
-                                        + "月" + dayOfMonth + "日");
+                                SimpleDateFormat simpleDateFormat =new SimpleDateFormat("yyyy-MM-dd");
+                                Date da=new Date(year-1900,monthOfYear,dayOfMonth);
+                                String result =simpleDateFormat.format(da);
+                                date.setText(result);
+                                collectFragment.dateChanged(result);
                             }
+
                         }
                         // 设置初始日期
                         , c.get(Calendar.YEAR), c.get(Calendar.MONTH), c

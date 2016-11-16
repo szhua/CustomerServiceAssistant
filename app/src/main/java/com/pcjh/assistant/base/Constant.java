@@ -16,6 +16,5 @@ public static final String SET_FANS_TAG ="set_fans_tag" ;
  public static final String REMOVE_FANS_TAG ="remove_fans_tag" ;
  public static final String GET_MATERIAL_TAGS ="get_material_tags" ;
  public static final String GET_MATERIAL_LIST ="get_material_list" ;
-
-
+ public static final String ADD_MATERIAL_FAVORITE_COUNT ="add_material_favorite_count" ;
 }

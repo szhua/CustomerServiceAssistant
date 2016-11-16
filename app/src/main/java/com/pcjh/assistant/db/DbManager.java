@@ -65,15 +65,22 @@ public class DbManager {
             db.setTransactionSuccessful(); // 设置事务成功完成
         } catch (IOException e) {
             e.printStackTrace();
+            Log.i("szhua",e.toString());
         }finally {
             db.endTransaction();
         }
     }
 
-
-
-
-
+    public void addUpdateTime(String uin ,String updatetime){
+        db.beginTransaction();
+        try {
+            db.execSQL("INSERT INTO " + DatabaseHelper.TABLE_NAME_UPDATE_TIME +"( 'lastCreateTime' , 'uin' )"
+                    + " VALUES(? , ? )", new Object[]{updatetime, uin});
+            db.setTransactionSuccessful(); // 设置事务成功完成
+        } finally {
+            db.endTransaction();
+        }
+    }
 
     public void addTags(List<Tag> tags){
         db.beginTransaction();
@@ -81,8 +88,6 @@ public class DbManager {
         {
             for (Tag tag : tags)
             {
-
-                Log.i("szhua","tagname"+tag.getName());
                 db.execSQL("INSERT INTO " + DatabaseHelper.TABLE_NAME_TAG +"( 'type' , 'name' )"
                         + " VALUES(? , ?)", new Object[]{tag.getType(), tag.getName()});
                 // 带两个参数的execSQL()方法，采用占位符参数？，把参数值放在后面，顺序对应
@@ -96,12 +101,6 @@ public class DbManager {
             db.endTransaction(); // 结束事务
         }
     }
-
-
-
-
-
-
 
     public void addLabel(List<Label> labels){
         db.beginTransaction(); // 开始事务
@@ -191,7 +190,29 @@ public class DbManager {
                 new String[] { person.getNickName() });
     }
 
+    /**
+     * 更新用户的上传聊天记录的时间 ;
+     * @param uin
+     * @param updatetime
+     */
+    public void updateUpdateTime(String uin ,String updatetime){
+        ContentValues cv =new ContentValues() ;
+        cv.put("lastCreateTime",updatetime);
+        db.update(DatabaseHelper.TABLE_NAME_UPDATE_TIME,cv,"uin = ?",new String[]{uin});
+    }
 
+
+    public String getUpdateTime(String uin){
+        Cursor c = db.rawQuery("SELECT * FROM " + DatabaseHelper.TABLE_NAME_UPDATE_TIME +" where uin = "+uin ,
+                null);
+        String updateTime ="" ;
+        while (c.moveToNext())
+        {
+         updateTime =c.getString(c.getColumnIndex("lastCreateTime"));
+        }
+        c.close();
+        return  updateTime ;
+    }
 
     public void deleteConnacts(ArrayList<RConact> rConacts){
         for (RConact rConact : rConacts) {
@@ -219,19 +240,44 @@ public class DbManager {
     public List<Matrial> queryCollectMatrials(String date){
 
         ArrayList<Matrial> matrials =new ArrayList<>() ;
-        Cursor c = db.rawQuery("SELECT * FROM " + DatabaseHelper.TABLE_NAME_MATARIAL_COLLECT +" where createtime = "+date,
+        String sql ="SELECT * FROM " + DatabaseHelper.TABLE_NAME_MATARIAL_COLLECT +" where createtime = '"+date+"'" ;
+        Cursor c = db.rawQuery(sql,
                 null);
         while (c.moveToNext())
         {
+            Log.i("szhua","cc");
             Matrial matrial =null;
             String json =c.getString(c.getColumnIndex("json")) ;
             try {
-                Matrial matrial1 =JsonUtil.json2pojo(json,Matrial.class) ;
+             matrial =JsonUtil.json2pojo(json,Matrial.class) ;
             } catch (IOException e){
                 e.printStackTrace();
             }
             if (matrial!=null) {
                 matrials.add(matrial);
+            }
+        }
+        c.close();
+        return  matrials ;
+    }
+
+    public List<Matrial> queryCollectMatrials(){
+        ArrayList<Matrial> matrials =new ArrayList<>() ;
+        Cursor c = db.rawQuery("SELECT * FROM " + DatabaseHelper.TABLE_NAME_MATARIAL_COLLECT  ,
+                null);
+        while (c.moveToNext())
+        {
+            Matrial matrial1 =null;
+            String json =c.getString(c.getColumnIndex("json")) ;
+            String createtime =c.getString(c.getColumnIndex("createtime"));
+            Log.i("szhua",createtime);
+            try {
+            matrial1 =JsonUtil.json2pojo(json,Matrial.class) ;
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+            if (matrial1!=null) {
+                matrials.add(matrial1);
             }
         }
         c.close();

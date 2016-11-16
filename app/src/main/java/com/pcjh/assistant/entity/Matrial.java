@@ -15,7 +15,21 @@ public class Matrial {
     String tag_id ;
     String content ;
     String add_time ;
+    String favorite_count ;
+    String repost_count ;
 
+    public String getFavorite_count() {
+        return favorite_count;
+    }
+    public void setFavorite_count(String favorite_count) {
+        this.favorite_count = favorite_count;
+    }
+    public String getRepost_count() {
+        return repost_count;
+    }
+    public void setRepost_count(String repost_count) {
+        this.repost_count = repost_count;
+    }
     public String getAdd_time() {
         return add_time;
     }

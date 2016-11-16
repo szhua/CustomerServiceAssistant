@@ -18,12 +18,18 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.mengma.asynchttp.RequestCode;
+import com.mengma.asynchttp.interf.INetResult;
 import com.pcjh.assistant.R;
 import com.pcjh.assistant.activity.CheckPhotoActivity;
+import com.pcjh.assistant.dao.AddMaterialFavoriteCountDao;
 import com.pcjh.assistant.db.DbManager;
 import com.pcjh.assistant.entity.HomeEntity;
 import com.pcjh.assistant.entity.Image;
 import com.pcjh.assistant.entity.Matrial;
+import com.pcjh.assistant.fragment.CollectFragment;
+import com.pcjh.assistant.fragment.HomeFragment;
+import com.pcjh.assistant.util.SharedPrefsUtil;
 import com.pcjh.liabrary.ninegridimgview.NineGridImageView;
 import com.pcjh.liabrary.ninegridimgview.NineGridImageViewAdapter;
 import com.squareup.picasso.Picasso;
@@ -49,23 +55,23 @@ import rx.schedulers.Schedulers;
 /**
  * Created by szhua on 2016/10/28.
  */
-public class HomeListAdapter extends RecyclerView.Adapter {
+public class HomeListAdapter extends RecyclerView.Adapter implements INetResult {
 
 
     private Context context;
     private LayoutInflater inflater;
     private int  IMAGE_NAME;
     private ArrayList<Matrial> matrialArrayList =new ArrayList<>() ;
-
+    private AddMaterialFavoriteCountDao addMaterialFavoriteCountDao ;
 
     public void setMatrialArrayList(ArrayList<Matrial> matrialArrayList) {
         this.matrialArrayList = matrialArrayList;
         notifyDataSetChanged();
     }
-
     public HomeListAdapter(Context context) {
         this.context = context;
         inflater = LayoutInflater.from(context);
+        addMaterialFavoriteCountDao =new AddMaterialFavoriteCountDao(context,this);
     }
 
     @Override
@@ -85,16 +91,10 @@ public class HomeListAdapter extends RecyclerView.Adapter {
     }
 
     @Override
-    public void onBindViewHolder(final RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
         final HomeListHolder homeListHolder = (HomeListHolder) holder;
         homeListHolder.bind(matrialArrayList.get(position),context);
-        homeListHolder.collectBt.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                homeListHolder.collectIcon.setImageResource(R.drawable.collect);
-                homeListHolder.collectNum.setTextColor(context.getResources().getColor(R.color.collect_color_un));
-            }
-        });
+
         homeListHolder.transformbt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -153,11 +153,69 @@ public class HomeListAdapter extends RecyclerView.Adapter {
             }
         });
 
-    }
 
+        final Matrial matrial =matrialArrayList.get(position);
+        final DbManager dbManager =new DbManager(context);
+        final boolean iscollected =dbManager.checkIsCollect(matrial.getId());
+        try{
+            if(iscollected){
+               homeListHolder. collectIcon.setImageResource(R.drawable.collect);
+                homeListHolder.collectNum.setTextColor(context.getResources().getColor(R.color.collect_color_un));
+            }else{
+                homeListHolder.  collectIcon.setImageResource(R.drawable.collect_un);
+                homeListHolder. collectNum.setTextColor(context.getResources().getColor(R.color.collect_color));
+            }
+        }catch (Exception e){
+
+        }
+
+        homeListHolder. collectBt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                addMaterialFavoriteCountDao.addFavoriateCount("shuweineng888", SharedPrefsUtil.getValue(context,"token",""),matrial.getId(),position);
+                if(iscollected){
+                    dbManager.deleteMatrial(matrial);
+                    homeListHolder.   collectIcon.setImageResource(R.drawable.collect_un);
+                    homeListHolder.  collectNum.setTextColor(context.getResources().getColor(R.color.collect_color));
+                    notifyDataSetChanged();
+                }else{
+                    SimpleDateFormat simpleDateFormat =new SimpleDateFormat("yyyy-MM-dd");
+                    String createtime =simpleDateFormat.format(new Date());
+                    dbManager.addCollectMatrial(matrial,createtime);
+                    homeListHolder.collectIcon.setImageResource(R.drawable.collect);
+                    homeListHolder.collectNum.setTextColor(context.getResources().getColor(R.color.collect_color_un));
+                    notifyDataSetChanged();
+                }
+            }
+        });
+    }
     @Override
     public int getItemCount() {
         return matrialArrayList.size();
+    }
+
+    @Override
+    public void onRequestSuccess(int requestCode) {
+        if(requestCode== RequestCode.CODE_5){
+            int postion =addMaterialFavoriteCountDao.getPostion() ;
+            matrialArrayList.get(postion).setFavorite_count(""+addMaterialFavoriteCountDao.getFavorite_count());
+            notifyDataSetChanged();
+        }
+    }
+
+    @Override
+    public void onRequestError(int requestCode, String errorInfo, int error_code) {
+
+    }
+
+    @Override
+    public void onRequestFaild(String errorNo, String errorMessage) {
+
+    }
+
+    @Override
+    public void onNoConnect() {
+
     }
 
     static class HomeListHolder extends RecyclerView.ViewHolder {
@@ -209,56 +267,17 @@ public class HomeListAdapter extends RecyclerView.Adapter {
             }
             @Override
             protected void onItemImageClick(Context context, int index, List<Image> list) {
-                Toast.makeText(context, "image position is " + index, Toast.LENGTH_SHORT).show();
-                Intent intent =new Intent(context, CheckPhotoActivity.class) ;
-                context.startActivity(intent);
+//                Toast.makeText(context, "image position is " + index, Toast.LENGTH_SHORT).show();
+//                Intent intent =new Intent(context, CheckPhotoActivity.class) ;
+//                context.startActivity(intent);
             }
         };
         public void bind(final Matrial matrial , final Context context) {
             nineGridView.setImagesData(matrial.getImages());
             if(!TextUtils.isEmpty(matrial.getContent()))
             content.setText(matrial.getContent());
-            final DbManager dbManager =new DbManager(context);
-            final boolean iscollected =dbManager.checkIsCollect(matrial.getId());
-          try{
-              if(iscollected){
-                  collectIcon.setImageResource(R.drawable.collect);
-                  collectNum.setTextColor(context.getResources().getColor(R.color.collect_color_un));
-              }else{
-                  collectIcon.setImageResource(R.drawable.collect_un);
-                  collectNum.setTextColor(context.getResources().getColor(R.color.collect_color));
-              }
-          }catch (Exception e){
-
-          }
-
-            collectBt.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                  if(iscollected){
-                      dbManager.deleteMatrial(matrial);
-                      collectIcon.setImageResource(R.drawable.collect_un);
-                      collectNum.setTextColor(context.getResources().getColor(R.color.collect_color));
-                  }else{
-                      SimpleDateFormat simpleDateFormat =new SimpleDateFormat("yyyy-MM-dd");
-                      String createtime =simpleDateFormat.format(new Date());
-                      dbManager.addCollectMatrial(matrial,createtime);
-                      collectIcon.setImageResource(R.drawable.collect);
-                      collectNum.setTextColor(context.getResources().getColor(R.color.collect_color_un));
-                  }
-
-                }
-            });
-
-
-
-
-
-
-
-
-
-
+               collectNum.setText( matrial.getFavorite_count());
+              tranformNum.setText(matrial.getRepost_count());
          try{
              long da =Long.parseLong(matrial.getAdd_time());
              Date date =new Date(da) ;
@@ -266,7 +285,7 @@ public class HomeListAdapter extends RecyclerView.Adapter {
              String result =dateFormat.format(date);
              this.date.setText(result);
          }catch (Exception e){
-
+            e.printStackTrace();
          }
         }
 
