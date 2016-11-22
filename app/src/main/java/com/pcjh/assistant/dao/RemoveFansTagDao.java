@@ -22,17 +22,16 @@ public class RemoveFansTagDao extends IDao {
     public RemoveFansTagDao(Context context, INetResult iNetResult) {
         super(context, iNetResult);
     }
-    public void removeFansTags(String wx , String token, LabelGroup labelGroup){
+    public void removeFansTags(String wx , String token, String tagname,ArrayList<String> wxs){
         RequestParams requestParams =new RequestParams() ;
         requestParams.add("wx",wx);
         requestParams.add("token",token);
 
-        ArrayList<RConact> rConacts =labelGroup.getrConacts() ;
-        for (int i =0 ;i<rConacts.size();i++) {
-            RConact rc =rConacts.get(i) ;
-            requestParams.add("fans_wx[]"+i,rc.getAlias());
+        for (int i =0 ;i<wxs.size();i++) {
+            String rc =wxs.get(i) ;
+            requestParams.add("fans_wx[]"+i,rc);
         }
-        requestParams.add("tag_name",labelGroup.getLabel().getLabelName());
+        requestParams.add("tag_name",tagname);
         postRequest(Constant.BASE_URL+Constant.REMOVE_FANS_TAG,requestParams, RequestCode.CODE_4);
     }
     @Override

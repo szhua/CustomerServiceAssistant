@@ -23,6 +23,8 @@ import com.mengma.asynchttp.interf.INetResult;
 import com.pcjh.assistant.R;
 import com.pcjh.assistant.activity.CheckPhotoActivity;
 import com.pcjh.assistant.dao.AddMaterialFavoriteCountDao;
+import com.pcjh.assistant.dao.AddMaterialRepostCountDao;
+import com.pcjh.assistant.dao.RemoveMaterialFavoriteCountDao;
 import com.pcjh.assistant.db.DbManager;
 import com.pcjh.assistant.entity.HomeEntity;
 import com.pcjh.assistant.entity.Image;
@@ -57,12 +59,15 @@ import rx.schedulers.Schedulers;
  */
 public class HomeListAdapter extends RecyclerView.Adapter implements INetResult {
 
-
     private Context context;
     private LayoutInflater inflater;
     private int  IMAGE_NAME;
     private ArrayList<Matrial> matrialArrayList =new ArrayList<>() ;
     private AddMaterialFavoriteCountDao addMaterialFavoriteCountDao ;
+    private RemoveMaterialFavoriteCountDao removeMaterialFavoriteCountDao ;
+    private AddMaterialRepostCountDao addMaterialRepostCountDao ;
+    DbManager dbManager ;
+
 
     public void setMatrialArrayList(ArrayList<Matrial> matrialArrayList) {
         this.matrialArrayList = matrialArrayList;
@@ -72,6 +77,9 @@ public class HomeListAdapter extends RecyclerView.Adapter implements INetResult 
         this.context = context;
         inflater = LayoutInflater.from(context);
         addMaterialFavoriteCountDao =new AddMaterialFavoriteCountDao(context,this);
+        removeMaterialFavoriteCountDao =new RemoveMaterialFavoriteCountDao(context,this) ;
+        addMaterialRepostCountDao =new AddMaterialRepostCountDao(context,this) ;
+        dbManager =new DbManager(context);
     }
 
     @Override
@@ -115,7 +123,7 @@ public class HomeListAdapter extends RecyclerView.Adapter implements INetResult 
                  })
                          .subscribeOn(Schedulers.io())
                          .observeOn(AndroidSchedulers.mainThread())
-                   .subscribe(new Subscriber<File>() {
+                   .subscribe(new Subscriber<File>(){
                      @Override
                      public void onCompleted() {
                          Intent intent = new Intent();
@@ -147,15 +155,11 @@ public class HomeListAdapter extends RecyclerView.Adapter implements INetResult 
                          files.add(file);
                      }
                  });
-                ((HomeListHolder) holder).tranformIcon.setVisibility(View.GONE);
-                ((HomeListHolder) holder).tranformNum.setText(" 已转发 ");
-                homeListHolder.tranformNum.setTextColor(context.getResources().getColor(R.color.transform_color));
+                if(matrialArrayList.get(position).getId()!=null)
+                addMaterialRepostCountDao.addMaterialRepostCount(getWx(),getToken(),matrialArrayList.get(position).getId(),position);
             }
         });
-
-
         final Matrial matrial =matrialArrayList.get(position);
-        final DbManager dbManager =new DbManager(context);
         final boolean iscollected =dbManager.checkIsCollect(matrial.getId());
         try{
             if(iscollected){
@@ -172,13 +176,15 @@ public class HomeListAdapter extends RecyclerView.Adapter implements INetResult 
         homeListHolder. collectBt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                addMaterialFavoriteCountDao.addFavoriateCount("shuweineng888", SharedPrefsUtil.getValue(context,"token",""),matrial.getId(),position);
+
                 if(iscollected){
+                    removeMaterialFavoriteCountDao.cancelFavoriateCount(getWx(),getToken(),matrial.getId(),position);
                     dbManager.deleteMatrial(matrial);
-                    homeListHolder.   collectIcon.setImageResource(R.drawable.collect_un);
-                    homeListHolder.  collectNum.setTextColor(context.getResources().getColor(R.color.collect_color));
+                    homeListHolder.collectIcon.setImageResource(R.drawable.collect_un);
+                    homeListHolder.collectNum.setTextColor(context.getResources().getColor(R.color.collect_color));
                     notifyDataSetChanged();
                 }else{
+                    addMaterialFavoriteCountDao.addFavoriateCount(getWx(), getToken(),matrial.getId(),position);
                     SimpleDateFormat simpleDateFormat =new SimpleDateFormat("yyyy-MM-dd");
                     String createtime =simpleDateFormat.format(new Date());
                     dbManager.addCollectMatrial(matrial,createtime);
@@ -196,20 +202,32 @@ public class HomeListAdapter extends RecyclerView.Adapter implements INetResult 
 
     @Override
     public void onRequestSuccess(int requestCode) {
-        if(requestCode== RequestCode.CODE_5){
-            int postion =addMaterialFavoriteCountDao.getPostion() ;
-            matrialArrayList.get(postion).setFavorite_count(""+addMaterialFavoriteCountDao.getFavorite_count());
-            notifyDataSetChanged();
+
+        int postion  ;
+        switch (requestCode){
+            case RequestCode.CODE_5:
+               postion =addMaterialFavoriteCountDao.getPostion() ;
+                matrialArrayList.get(postion).setFavorite_count(""+addMaterialFavoriteCountDao.getFavorite_count());
+                notifyDataSetChanged();
+                break;
+            case  RequestCode.REMOVEFAVRIVATE :
+                postion =removeMaterialFavoriteCountDao.getPostion() ;
+                matrialArrayList.get(postion).setFavorite_count(""+removeMaterialFavoriteCountDao.getFavorite_count());
+                notifyDataSetChanged();
+                break;
+            case  RequestCode.ADDMETRIALTRANCOUNT:
+                postion =addMaterialRepostCountDao.getPosition() ;
+                matrialArrayList.get(postion).setRepost_count(""+addMaterialRepostCountDao.getRepost_count());
+                notifyDataSetChanged();
+                break;
         }
     }
-
     @Override
     public void onRequestError(int requestCode, String errorInfo, int error_code) {
-
     }
 
     @Override
-    public void onRequestFaild(String errorNo, String errorMessage) {
+    public void onRequestFaild(int requestCode, String errorNo, String errorMessage) {
 
     }
 
@@ -252,10 +270,10 @@ public class HomeListAdapter extends RecyclerView.Adapter implements INetResult 
             @Override
             protected void onDisplayImage(Context context, ImageView imageView, Image s) {
 
-             String path ="http://"+s.getServer()+s.getPath() ;
+                String path ="http://"+s.getServer()+s.getPath() ;
                 Picasso.with(context)
                         .load(path)
-                        .placeholder(R.mipmap.ic_launcher)
+                        .placeholder(context.getResources().getColor(R.color.text_color_light))
                         .resize(300,300)
                         .centerCrop()
                         .into(imageView);
@@ -276,7 +294,10 @@ public class HomeListAdapter extends RecyclerView.Adapter implements INetResult 
             nineGridView.setImagesData(matrial.getImages());
             if(!TextUtils.isEmpty(matrial.getContent()))
             content.setText(matrial.getContent());
-               collectNum.setText( matrial.getFavorite_count());
+            if(!TextUtils.isEmpty(matrial.getFavorite_count())){
+               collectNum.setText( matrial.getFavorite_count());}else{
+                collectNum.setText("0");
+            }
               tranformNum.setText(matrial.getRepost_count());
          try{
              long da =Long.parseLong(matrial.getAdd_time());
@@ -288,11 +309,7 @@ public class HomeListAdapter extends RecyclerView.Adapter implements INetResult 
             e.printStackTrace();
          }
         }
-
-
     }
-
-
 
     public  File getFile(ImageView res){
         boolean success = false;
@@ -329,5 +346,16 @@ public class HomeListAdapter extends RecyclerView.Adapter implements INetResult 
         File storageDir = context.getExternalCacheDir();
         File image = new File(storageDir, imageFileName);
         return image;
+    }
+
+
+    public String getWx(){
+        String wx = SharedPrefsUtil.getValue(context,"wx","") ;
+        return   wx ;
+    }
+
+    public String getToken(){
+        String token = SharedPrefsUtil.getValue(context,"token","") ;
+        return   token  ;
     }
 }

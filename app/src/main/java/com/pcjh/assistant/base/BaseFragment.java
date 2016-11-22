@@ -12,6 +12,7 @@ import android.widget.TextView;
 import com.mengma.asynchttp.dialog.ProgressHUD;
 import com.mengma.asynchttp.interf.INetResult;
 import com.pcjh.assistant.R;
+import com.pcjh.assistant.util.SharedPrefsUtil;
 import com.pcjh.liabrary.utils.UiUtil;
 
 
@@ -44,7 +45,7 @@ public class BaseFragment extends Fragment implements INetResult {
 
 
     @Override
-    public void onRequestFaild(String errorNo, String errorMessage) {
+    public void onRequestFaild(int requestCode, String errorNo, String errorMessage) {
         UiUtil.showLongToast(getContext(), errorMessage);
         showProgress(false);
     }
@@ -68,4 +69,11 @@ public class BaseFragment extends Fragment implements INetResult {
             }
         }
     }
+
+    public String getWx(){
+        String wx = SharedPrefsUtil.getValue(getContext(),"wx","") ;
+        return   wx  ;
+    }
+
+
 }

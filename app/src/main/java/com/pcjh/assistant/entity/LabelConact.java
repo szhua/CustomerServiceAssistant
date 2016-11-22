@@ -5,32 +5,30 @@ package com.pcjh.assistant.entity;
  */
 public class LabelConact {
 
-    private Label label  ;
-    private RConact rconact ;
+    private String  tag_name  ;
+    private String wx ;
 
-
-    public Label getLabel() {
-        return label;
+    public String getTag_name() {
+        return tag_name;
     }
 
-    public void setLabel(Label label) {
-        this.label = label;
+    public void setTag_name(String tag_name) {
+        this.tag_name = tag_name;
     }
 
-
-    public RConact getRconact() {
-        return rconact;
+    public String getWx() {
+        return wx;
     }
 
-    public void setRconact(RConact rconact) {
-        this.rconact = rconact;
+    public void setWx(String wx) {
+        this.wx = wx;
     }
 
     @Override
     public String toString() {
         return "LabelConact{" +
-                "label=" + label +
-                ", rconact=" + rconact +
+                "tag_name='" + tag_name + '\'' +
+                ", wx='" + wx + '\'' +
                 '}';
     }
 }

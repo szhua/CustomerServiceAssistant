@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.pcjh.assistant.R;
+import com.pcjh.assistant.util.SharedPrefsUtil;
 import com.pcjh.liabrary.refreshLayout.RecyclerRefreshLayout;
 
 
@@ -117,5 +118,17 @@ public abstract class BaseLoadMoreListFragment extends BaseFragment implements S
     @Override
     public void onRefresh() {
         refresh();
+    }
+
+
+
+    public String getWx(){
+        String wx = SharedPrefsUtil.getValue(getContext(),"wx","") ;
+        return   wx  ;
+    }
+
+    public String getToken(){
+        String token = SharedPrefsUtil.getValue(getContext(),"token","") ;
+        return   token  ;
     }
 }

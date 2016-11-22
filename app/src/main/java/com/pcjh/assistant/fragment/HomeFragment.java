@@ -35,7 +35,6 @@ public class HomeFragment extends BaseLoadMoreListFragment implements INetResult
     private HomeListAdapter homeListAdapter ;
     private GetMaterialListDao getMaterialListDao =new GetMaterialListDao(getContext(),this);
     private ArrayList<Matrial> matrialArrayList =new ArrayList<Matrial>() ;
-    private AddMaterialFavoriteCountDao addMaterialFavoriteCountDao =new AddMaterialFavoriteCountDao(getContext(),this) ;
     private String words  ;
 
     public void setWords(String words) {
@@ -47,7 +46,7 @@ public class HomeFragment extends BaseLoadMoreListFragment implements INetResult
     }
     public void setSearchWords(String words){
         this.words =words ;
-        getMaterialListDao.getMaterialList("shuweineng888", SharedPrefsUtil.getValue(getContext(),"token",""),type,words);
+        getMaterialListDao.getMaterialList(getWx(), getToken(),type,words);
     }
     public static HomeFragment getInstance(String title,String type){
         HomeFragment homeFragment =new HomeFragment() ;
@@ -56,9 +55,6 @@ public class HomeFragment extends BaseLoadMoreListFragment implements INetResult
         return homeFragment ;
     }
 
-    public void addMatrialFav(String matrial_id,int postion){
-    addMaterialFavoriteCountDao.addFavoriateCount("shuweineng888",SharedPrefsUtil.getValue(getContext(),"token",""),matrial_id,postion);
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -67,14 +63,10 @@ public class HomeFragment extends BaseLoadMoreListFragment implements INetResult
         homeListAdapter.setMatrialArrayList(matrialArrayList);
     }
 
-
-
-
-
     @Override
     public void onResume() {
         super.onResume();
-        getMaterialListDao.getMaterialList("shuweineng888", AppHolder.getInstance().getToken(),type);
+        getMaterialListDao.getMaterialList(getWx(),getToken(),type);
     }
 
     @Override
@@ -96,7 +88,7 @@ public class HomeFragment extends BaseLoadMoreListFragment implements INetResult
     }
     @Override
     public void refresh() {
-        getMaterialListDao.getMaterialList("shuweineng888", AppHolder.getInstance().getToken(),type);
+        getMaterialListDao.getMaterialList(getWx(), getToken(),type);
     }
     @Override
     public void onItemClick(int position) {
@@ -111,10 +103,11 @@ public class HomeFragment extends BaseLoadMoreListFragment implements INetResult
             matrialArrayList = (ArrayList<Matrial>) getMaterialListDao.getMatrials();
             homeListAdapter.setMatrialArrayList(matrialArrayList);
         }
-        if(requestCode==RequestCode.CODE_5){
-           matrialArrayList.get(addMaterialFavoriteCountDao.getPostion()).setFavorite_count(""+addMaterialFavoriteCountDao.getFavorite_count());
-            homeListAdapter.notifyDataSetChanged();
-        }
+
+    }
+
+    @Override
+    public void onRequestFaild(int requestCode, String errorNo, String errorMessage) {
 
     }
 }

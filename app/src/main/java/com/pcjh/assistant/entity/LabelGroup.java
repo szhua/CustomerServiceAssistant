@@ -8,38 +8,31 @@ import java.util.ArrayList;
 public class LabelGroup {
 
     //single
-    private Label label  ;
+    private String labelname  ;
 
-    private ArrayList<RConact> rConacts;
+    private ArrayList<String > wxs;
 
-
-    public LabelGroup(Label label, ArrayList<RConact> rConacts) {
-        this.label = label;
-        this.rConacts = rConacts;
+    public String getLabelname() {
+        return labelname;
     }
 
-    public Label getLabel() {
-        return label;
+    public void setLabelname(String labelname) {
+        this.labelname = labelname;
     }
 
-    public void setLabel(Label label) {
-        this.label = label;
+    public ArrayList<String> getWxs() {
+        return wxs;
     }
 
-    public ArrayList<RConact> getrConacts() {
-        return rConacts;
+    public void setWxs(ArrayList<String> wxs) {
+        this.wxs = wxs;
     }
-
-    public void setrConacts(ArrayList<RConact> rConacts) {
-        this.rConacts = rConacts;
-    }
-
 
     @Override
     public String toString() {
         return "LabelGroup{" +
-                "label=" + label +
-                ", rConacts=" + rConacts +
+                "labelname='" + labelname + '\'' +
+                ", wxs=" + wxs +
                 '}';
     }
 }

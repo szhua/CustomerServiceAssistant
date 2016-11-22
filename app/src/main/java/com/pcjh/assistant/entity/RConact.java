@@ -7,13 +7,21 @@ import java.io.Serializable;
  */
 public class RConact implements Serializable{
 
-public   String talker ;
    public String nickname ;
     //微信号；
     public  String alias ;
     public String type ;
     public String contactLabelIds ;
     public String username ;
+    public String conRemark ;
+
+    public String getConRemark() {
+        return conRemark;
+    }
+
+    public void setConRemark(String conRemark) {
+        this.conRemark = conRemark;
+    }
 
     public String getUsername() {
         return username;
@@ -25,6 +33,14 @@ public   String talker ;
         return contactLabelIds;
     }
 
+    public boolean isLableChageed ;
+
+    public void setLableChageed(boolean lableChageed) {
+        isLableChageed = lableChageed;
+    }
+    public boolean isLableChageed() {
+        return isLableChageed;
+    }
     public void setContactLabelIds(String contactLabelIds) {
         this.contactLabelIds = contactLabelIds;
     }
@@ -54,23 +70,17 @@ public   String talker ;
 
 
 
-    public String getTalker() {
-        return talker;
-    }
 
-    public void setTalker(String talker) {
-        this.talker = talker;
-    }
 
     @Override
     public String toString() {
         return "RConact{" +
-                "talker='" + talker + '\'' +
                 ", nickname='" + nickname + '\'' +
                 ", alias='" + alias + '\'' +
                 ", type='" + type + '\'' +
                 ", contactLabelIds='" + contactLabelIds + '\'' +
                 ", username='" + username + '\'' +
+                ", conRemark='" + conRemark + '\'' +
                 '}';
     }
 }

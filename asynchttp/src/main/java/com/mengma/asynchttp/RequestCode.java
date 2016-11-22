@@ -16,6 +16,12 @@ public class RequestCode {
     public final static int UPLOADFILE =101 ;
     public final static int UPLOADFILE1 =102 ;
     public final static int INITSUCESS =103 ;
+    public final static int UPLOADTEXT =104 ;
+    public final static int UPLOADTEXTFORFILE =107;
+    public final static int APPENDFANS =105 ;
+    public final static int CHANGEFANS =106 ;
+    public final  static int REMOVEFAVRIVATE =108 ;
+    public final static int ADDMETRIALTRANCOUNT =109 ;
 
     public final static int CODE_LOGIN = 100;  //登录
     public final static int CODE_CREATE_ORDER_DINGGOU = 101;

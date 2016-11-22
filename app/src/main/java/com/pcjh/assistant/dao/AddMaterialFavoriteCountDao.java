@@ -16,15 +16,12 @@ import java.io.IOException;
  */
 public class AddMaterialFavoriteCountDao  extends IDao
 {
-
     private int favorite_count ;
     private int postion ;
 
     public int getFavorite_count() {
         return favorite_count;
     }
-
-
     public AddMaterialFavoriteCountDao(Context context, INetResult iNetResult) {
         super(context, iNetResult);
     }

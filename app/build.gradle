@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.pcjh.assistant"
-        minSdkVersion 15
+        minSdkVersion 16
         targetSdkVersion 24
         versionCode 1
         versionName "1.0"
@@ -39,6 +39,7 @@ android {
         exclude 'META-INF/LGPL2.1'
         exclude 'META-INF/ASL2.0'
     }
+
 }
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
@@ -52,5 +53,4 @@ dependencies {
     compile 'io.reactivex:rxandroid:1.1.0'
     compile 'eu.chainfire:libsuperuser:1.0.0.201602271131'
     compile project(':asynchttp')
-    compile project(':LibMarsdaemon')
 }

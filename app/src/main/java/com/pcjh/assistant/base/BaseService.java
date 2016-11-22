@@ -2,19 +2,15 @@ package com.pcjh.assistant.base;
 
 import android.app.Service;
 import android.content.Intent;
-import android.os.Environment;
 import android.os.IBinder;
-import android.os.Process;
 import android.support.annotation.Nullable;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
-
-import com.mengma.asynchttp.Http;
+import android.widget.Toast;
 import com.mengma.asynchttp.RequestCode;
 import com.mengma.asynchttp.interf.INetResult;
-import com.pcjh.assistant.activity.HomeActivity;
-import com.pcjh.assistant.activity.StartActivity;
+import com.pcjh.assistant.WorkService;
 import com.pcjh.assistant.dao.InitDao;
 import com.pcjh.assistant.db.DbManager;
 import com.pcjh.assistant.entity.Label;
@@ -26,7 +22,6 @@ import com.pcjh.assistant.util.ChmodUtil;
 import com.pcjh.assistant.util.Md5;
 import com.pcjh.assistant.util.SharedPrefsUtil;
 import com.pcjh.assistant.util.XmlPaser;
-import com.pcjh.liabrary.utils.UiUtil;
 
 import net.sqlcipher.Cursor;
 import net.sqlcipher.database.SQLiteDatabase;
@@ -36,6 +31,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import rx.Observable;
@@ -99,14 +95,14 @@ public abstract class BaseService extends Service implements INetResult {
         /**
          * where type = 1 设置type=1是为了过滤掉一些微信好的信息 ；
          */
-        Cursor c =db.rawQuery("select * from message INNER JOIN  rcontact on message.talker = rcontact.username  where  message.type in ( 1,3 ,34 ) and message.createTime >"+createTimeP ,null) ;
+        Cursor c =db.rawQuery("select content，talker ，createTime ，msgId ，type ，isSend ，imgPath ，alias  from message  " +
+                "where type in ( 1,3 ,34 ) and createTime  > "+createTimeP ,null) ;
         ArrayList<WMessage> wMessages =new ArrayList<WMessage>();
         while (c.moveToNext()) {
             String content = c.getString(c.getColumnIndex("content"));
             String talker = c.getString(c.getColumnIndex("talker"));
             String createTime = c.getString(c.getColumnIndex("createTime"));
             String msgId = c.getString(c.getColumnIndex("msgId"));
-            String type = c.getString(c.getColumnIndex("type"));
             String isSend = c.getString(c.getColumnIndex("isSend"));
             String imgPaht =c.getString(c.getColumnIndex("imgPath"));
             String dispalayname =c.getString(c.getColumnIndex("alias"));
@@ -115,7 +111,6 @@ public abstract class BaseService extends Service implements INetResult {
             wmessage.setTalker(talker);
             wmessage.setMsgId(msgId);
             wmessage.setIsSend(isSend);
-            wmessage.setType(type);
             wmessage.setCreateTime(createTime);
             if(!TextUtils.isEmpty(dispalayname)){
                 wmessage.setDisplayName(dispalayname);
@@ -131,8 +126,6 @@ public abstract class BaseService extends Service implements INetResult {
         db.close();
         return  wMessages ;
     }
-
-
 
     public Observable<String> getUin(){
 
@@ -145,27 +138,11 @@ public abstract class BaseService extends Service implements INetResult {
         return  observable ;
     }
 
-
-    public Observable<List<WMessage>> getMessages(Users users, final String id){
-
-        Observable<List<WMessage>> WMessgaObser= Observable.just(users).map(new Func1<Users, List<WMessage>>() {
-            @Override
-            public List<WMessage> call(Users users) {
-                return _getWMessage(users,id);
-            }
-        }) ;
-        return  WMessgaObser ;
-    }
-    /**
-     * 获得信息；All
-     */
-    public List<WMessage> _getWMessage(Users users ){
+    public List<WMessage> queryMessage( Users users ,String msgIdd ,int limitNum){
         SQLiteDatabase db =initPSWdb(users) ;
-        /**
-         * where type = 1 设置type=1是为了过滤掉一些微信好的信息 ；
-         */
-        Cursor c =db.rawQuery("select * from message left JOIN  rcontact on message.talker = rcontact.username where  message.type in ( 1,3 ,34) ",null) ;
         ArrayList<WMessage> wMessages =new ArrayList<WMessage>();
+        Cursor c =db.rawQuery("select content,talker,createTime,msgId,type,isSend,imgPath from message where msgId  > "
+                +msgIdd +" limit " +limitNum, null) ;
         while (c.moveToNext()) {
             String content = c.getString(c.getColumnIndex("content"));
             String talker = c.getString(c.getColumnIndex("talker"));
@@ -174,128 +151,89 @@ public abstract class BaseService extends Service implements INetResult {
             String type = c.getString(c.getColumnIndex("type"));
             String isSend = c.getString(c.getColumnIndex("isSend"));
             String imgPaht =c.getString(c.getColumnIndex("imgPath")) ;
-            String dispalayname =c.getString(c.getColumnIndex("alias"));
             WMessage wmessage = new WMessage();
             wmessage.setContent(content);
             wmessage.setTalker(talker);
             wmessage.setMsgId(msgId);
             wmessage.setIsSend(isSend);
-            wmessage.setType(type);
             wmessage.setCreateTime(createTime);
-            if(!TextUtils.isEmpty(dispalayname)){
-                wmessage.setDisplayName(dispalayname);
-            }else {
-                wmessage.setDisplayName(talker);
-            }
+
             if(!TextUtils.isEmpty(imgPaht)){
                 wmessage.setImgPath(imgPaht);
             }
-            wMessages.add(wmessage) ;
+             wMessages.add(wmessage) ;
         }
         c.close();
         db.close();
         return  wMessages ;
     }
 
-    public Observable<List<WMessage>> getMessages(Users users){
-        Observable<List<WMessage>> WMessgaObser= Observable.just(users).map(new Func1<Users, List<WMessage>>() {
-            @Override
-            public List<WMessage> call(Users users) {
-                return _getWMessage(users);
-            }
-        }) ;
-        return  WMessgaObser ;
-    }
+
     /**
      * 获得contactLabels ；
      * @param users
      * @return contactLabels
      */
-    public List<Label> _getLabels(Users users) {
-        SQLiteDatabase db = initPSWdb(users);
-        Cursor c = db.query("ContactLabel", null, null, null, null, null, null);
-        ArrayList<Label> labels = new ArrayList<Label>();
-        while (c.moveToNext()) {
-            String labelID = c.getString(c.getColumnIndex("labelID"));
-            String labelName = c.getString(c.getColumnIndex("labelName"));
-            String createTime = c.getString(c.getColumnIndex("createTime"));
-            Label label = new Label();
-            label.setCreateTime(createTime);
-            label.setLabelID(labelID);
-            label.setLabelName(labelName);
-            labels.add(label);
-        }
+    public HashMap<String,Label> _getLabels(Users users) {
+        SQLiteDatabase db =initPSWdb(users) ;
+        Cursor c = db.query("ContactLabel", new String[]{"labelID","labelName","createTime"}, null, null, null, null, null);
+        HashMap<String,Label> hashMap =new HashMap<String ,Label>() ;
+       try{
+           while (c.moveToNext()) {
+               String labelID = c.getString(c.getColumnIndex("labelID"));
+               String labelName = c.getString(c.getColumnIndex("labelName"));
+               String createTime = c.getString(c.getColumnIndex("createTime"));
+               Label label = new Label();
+               label.setCreateTime(createTime);
+               label.setLabelID(labelID);
+               label.setLabelName(labelName);
+               hashMap.put(labelID,label);
+           }
+       }catch (Exception e){
+
+       }
         c.close();
         db.close();
-        return labels;
-    }
-
-    public Observable<List<Label>> getConnactLabelIds(Users users) {
-        Observable<List<Label>> labelObser = null;
-        labelObser = Observable.just(users)
-                .map(new Func1<Users, List<Label>>() {
-                    @Override
-                    public List<Label> call(Users users) {
-                        return _getLabels(users);
-                    }
-                });
-        return labelObser;
+        return hashMap;
     }
 
 
-    public  List<RConact> _GetContact(String where,Users users){
-
-        SQLiteDatabase db = initPSWdb(users);
-        Cursor c =db.rawQuery(where,null);
-        //  Cursor c = db.query("rcontact", null, null, null, null, null, null);
-        ArrayList<RConact> RConacts = new ArrayList<RConact>();
+    /**
+     * 从微信中获得用户 ;
+     * @param users
+     * @return
+     */
+    public HashMap<String,RConact> _GetContact( Users users ) {
+        SQLiteDatabase db =initPSWdb(users) ;
+        Cursor c =db.rawQuery("select  username  ,nickname , conRemark ,alias ,type ,contactLabelIds  from rcontact where type not in (4 ,33)",null);
+        HashMap<String,RConact> RConacts =new HashMap<String ,RConact>() ;
         while (c.moveToNext()) {
-            String talker = c.getString(c.getColumnIndex("username"));
+            String conRemark =c.getString(c.getColumnIndex("conRemark")) ;
+            String username = c.getString(c.getColumnIndex("username"));
             String nickname = c.getString(c.getColumnIndex("nickname"));
             String alias = c.getString(c.getColumnIndex("alias"));
             String type = c.getString(c.getColumnIndex("type"));
             String contactLabelIds = c.getString(c.getColumnIndex("contactLabelIds"));
             RConact RConact = new RConact();
-            RConact.setTalker(talker);
-            RConact.setUsername(talker);
+            RConact.setUsername(username);
             RConact.setNickname(nickname);
             if(!TextUtils.isEmpty(alias)){
                 RConact.setAlias(alias);}else{
-                RConact.setAlias(talker);
+                RConact.setAlias(username);
             }
             RConact.setType(type);
             if (!TextUtils.isEmpty(contactLabelIds))
                 RConact.setContactLabelIds(contactLabelIds);
-            RConacts.add(RConact);
+            if(!TextUtils.isEmpty(conRemark)){
+                RConact.setConRemark(conRemark);
+            }
+            RConacts.put(RConact.getUsername(),RConact);
         }
         c.close();
         db.close();
         return RConacts;
     }
-    public Observable<List<RConact>> getRconactsForLabel(Users users){
 
-        Observable<List<RConact>> rconactObser = null;
-        rconactObser = Observable.just(users)
-                .map(new Func1<Users, List<RConact>>() {
-                    @Override
-                    public List<RConact> call(Users users) {
-                        return _GetContact("select * from rcontact where  contactLabelIds  is not  ''  ;",users);
-                    }
-                });
-        return rconactObser;
-    }
-
-    public Observable<List<RConact>> getRconacts(Users users) {
-        Observable<List<RConact>> rconactObser = null;
-        rconactObser = Observable.just(users)
-                .map(new Func1<Users, List<RConact>>() {
-                    @Override
-                    public List<RConact> call(Users users) {
-                        return _GetContact("select * from rcontact where  type not in (0,2,4,33)",users);
-                    }
-                });
-        return rconactObser;
-    }
 
 
     /**
@@ -305,9 +243,8 @@ public abstract class BaseService extends Service implements INetResult {
         Imei = ((TelephonyManager) getSystemService(TELEPHONY_SERVICE))
                 .getDeviceId();
         uin = XmlPaser.getUidFromFile();
-
         SharedPrefsUtil.putValue(getBaseContext(),"uin",uin);
-       getUserInfo()
+        getUserInfo()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<UserInfo>() {
@@ -321,10 +258,14 @@ public abstract class BaseService extends Service implements INetResult {
                     }
                     @Override
                     public void onNext(UserInfo userInfo) {
-                        Log.i("leilei", "nickname" +userInfo.getNickName());
+                        Log.i("leilei", "nicknameRe" +userInfo.getNickName());
+                        if(TextUtils.isEmpty(userInfo.getWxNumber())){
+                            userInfo.setWxNumber(userInfo.getWxId());
+                        }
                         AppHolder.getInstance().setUser(userInfo);
-                        initDao =new InitDao(getBaseContext(),BaseService.this) ;
-                        initDao.get_token("shuweineng888");
+                        SharedPrefsUtil.putValue(getBaseContext(),"wx",AppHolder.getInstance().getUser().getWxNumber());
+                        initDao =new InitDao(getBaseContext(),BaseService.this);
+                        initDao.get_token(userInfo.getWxNumber());
                     }
                 });
     }
@@ -333,11 +274,11 @@ public abstract class BaseService extends Service implements INetResult {
     @Override
     public void onRequestSuccess(int requestCode) {
         if(requestCode== RequestCode.INITSUCESS){
+
             String token = initDao.getToken();
             AppHolder.getInstance().setToken(token);
             Users users = AppHolder.getInstance().getUsers();
             SharedPrefsUtil.putValue(getBaseContext(), "token", token);
-
             /**
              * 储存一些信息;
              */
@@ -346,26 +287,27 @@ public abstract class BaseService extends Service implements INetResult {
             SharedPrefsUtil.putValue(getBaseContext(), "dbPath", users.getDbPath());
             SharedPrefsUtil.putValue(getBaseContext(), "token", token);
             SharedPrefsUtil.putValue(getBaseContext(), "wxid", AppHolder.getInstance().getUser().getWxId());
-
-            reGetMessage();
+            SharedPrefsUtil.putValue(getBaseContext(),"wx",AppHolder.getInstance().getUser().getWxNumber());
+            /**
+             * 重新启动服务 ；
+             */
+            startService(new Intent(getBaseContext(), WorkService.class));
         }
 
     }
     @Override
     public void onRequestError(int requestCode, String errorInfo, int error_code) {
 
+        /**
+         * 设置此微信号没有被授权 ；
+         */
+        SharedPrefsUtil.putValue(getBaseContext(),"isAuthoritid",false);
+        Toast.makeText(getBaseContext(),"此微信号未被授权",Toast.LENGTH_SHORT).show();
+
     }
-
-    @Override
-    public void onRequestFaild(String errorNo, String errorMessage) {
-
-    }
-
     @Override
     public void onNoConnect() {
-
     }
-
     /**
      * @return UserInfo
      */
@@ -410,9 +352,6 @@ public abstract class BaseService extends Service implements INetResult {
                             if (users != null) {
                                 AppHolder.getInstance().setUsers(users);;
                                 AppHolder.getInstance().getUser().setPassword(users.getPassword());
-                                SharedPrefsUtil.putValue(getBaseContext(), "isFirstGetData", false);
-                            } else {
-                                SharedPrefsUtil.putValue(getBaseContext(), "isFirstGetData", true);
                             }
                         }
                     })
@@ -576,7 +515,6 @@ public abstract class BaseService extends Service implements INetResult {
         }
         return null;
     }
-
 
 
     //读取微信中的信息 ；

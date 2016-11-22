@@ -120,7 +120,7 @@ public abstract class IDao {
                 if (statusCode == 0)
                     mResult.onNoConnect();
                 else
-                    mResult.onRequestFaild("" + statusCode, responseBody);
+                    mResult.onRequestFaild(requestCode,"" + statusCode, responseBody);
             }
         });
 
@@ -174,7 +174,7 @@ public abstract class IDao {
                 if (statusCode == 0)
                     mResult.onNoConnect();
                 else
-                    mResult.onRequestFaild("" + statusCode, responseBody);
+                    mResult.onRequestFaild(requestCode,"" + statusCode, responseBody);
             }
         });
 
@@ -198,7 +198,7 @@ public abstract class IDao {
                 if (statusCode == 0)
                     mResult.onNoConnect();
                 else
-                    mResult.onRequestFaild("" + statusCode, responseBody);
+                    mResult.onRequestFaild(requestCode,"" + statusCode, responseBody);
             }
 
             @Override

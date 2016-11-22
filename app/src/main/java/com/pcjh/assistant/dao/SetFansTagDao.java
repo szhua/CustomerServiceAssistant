@@ -14,6 +14,7 @@ import com.pcjh.assistant.entity.RConact;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
 
 /**
@@ -25,17 +26,15 @@ public class SetFansTagDao extends IDao
         super(context, iNetResult);
     }
 
-    public void setFansTag(String wx , String token, LabelGroup labelGroup){
+    public void setFansTag(String wx , String token, String tag_name ,ArrayList<String> wxs){
         RequestParams requestParams =new RequestParams() ;
         requestParams.add("wx",wx);
         requestParams.add("token",token);
-
-        ArrayList<RConact> rConacts =labelGroup.getrConacts() ;
-        for (int i =0 ;i<rConacts.size();i++) {
-            RConact rc =rConacts.get(i) ;
-            requestParams.add("fans_wx[]"+i,rc.getAlias());
+        for (int i =0 ;i<wxs.size();i++) {
+            String rc =wxs.get(i) ;
+            requestParams.add("fans_wx[]"+i,rc);
         }
-        requestParams.add("tag_name",labelGroup.getLabel().getLabelName());
+        requestParams.add("tag_name",tag_name);
         postRequest(Constant.BASE_URL+Constant.SET_FANS_TAG,requestParams, RequestCode.CODE_4);
     }
     @Override

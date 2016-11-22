@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteStatement;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -18,7 +19,10 @@ import com.pcjh.assistant.entity.Users;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by szhua on 2016/10/18.
@@ -26,36 +30,25 @@ import java.util.List;
 public class DbManager {
     private DatabaseHelper helper;
     private SQLiteDatabase db;
+    private Context context ;
+
+
+    private static DbManager ourInstance = new DbManager();
+
+    public static DbManager getInstance(Context context) {
+        ourInstance.context=context;
+        return ourInstance;
+    }
+    private DbManager(){
+    }
 
     public DbManager(Context context)
     {
         helper = new DatabaseHelper(context);
         // 所以要确保context已初始化,我们可以把实例化DBManager的步骤放在Activity的onCreate里
+        if(db==null)
         db = helper.getWritableDatabase();
     }
-
-    public void addLabelConact(List<LabelConact> labelConacts){
-        db.beginTransaction();
-
-        try
-        {
-            for (LabelConact labelConact : labelConacts)
-            {
-                db.execSQL("INSERT INTO " + DatabaseHelper.TABLE_NAME_LABELCONACT +"('labelid','labelname','username' ,'alias')"
-                        + " VALUES(?, ? ,? , ? )", new Object[]{labelConact.getLabel().getLabelID(),
-                        labelConact.getLabel().getLabelName(), labelConact.getRconact().getTalker() ,labelConact.getRconact().getAlias()});
-                // 带两个参数的execSQL()方法，采用占位符参数？，把参数值放在后面，顺序对应
-                // 一个参数的execSQL()方法中，用户输入特殊字符时需要转义
-                // 使用占位符有效区分了这种情况
-            }
-            db.setTransactionSuccessful(); // 设置事务成功完成
-        }
-        finally
-        {
-            db.endTransaction(); // 结束事务
-        }
-    }
-
 
     public void addCollectMatrial(Matrial matrial ,String createtime){
         db.beginTransaction();
@@ -102,50 +95,6 @@ public class DbManager {
         }
     }
 
-    public void addLabel(List<Label> labels){
-        db.beginTransaction(); // 开始事务
-        try
-        {
-            for (Label label : labels)
-            {
-                db.execSQL("INSERT INTO " + DatabaseHelper.TABLE_NAME_LABEL +"('labelid','labelname')"
-                        + " VALUES(?, ?)", new Object[]{label.getLabelID(),
-                        label.getLabelName()});
-                // 带两个参数的execSQL()方法，采用占位符参数？，把参数值放在后面，顺序对应
-                // 一个参数的execSQL()方法中，用户输入特殊字符时需要转义
-                // 使用占位符有效区分了这种情况
-            }
-            db.setTransactionSuccessful(); // 设置事务成功完成
-        }
-        finally
-        {
-            db.endTransaction(); // 结束事务
-        }
-    }
-
-
-    public void addRconact(List<RConact> conacts){
-        //  Log.i("users",userses.toString()) ;
-        // 采用事务处理，确保数据完整性
-        db.beginTransaction(); // 开始事务
-        try
-        {
-            for (RConact con : conacts)
-            {
-                db.execSQL("INSERT INTO " + DatabaseHelper.TABLE_NAME_RConact +"('username','alias','nikcname','type','contactLabelIds','talker')"
-                        + " VALUES(?, ?, ?, ?, ?,? )", new Object[]{con.getTalker(),
-                        con.getAlias(), con.getNickname(),con.getType(),con.getContactLabelIds(),con.getTalker()});
-                // 带两个参数的execSQL()方法，采用占位符参数？，把参数值放在后面，顺序对应
-                // 一个参数的execSQL()方法中，用户输入特殊字符时需要转义
-                // 使用占位符有效区分了这种情况
-            }
-            db.setTransactionSuccessful(); // 设置事务成功完成
-        }
-        finally
-        {
-            db.endTransaction(); // 结束事务
-        }
-    }
 
 
     /**
@@ -202,6 +151,18 @@ public class DbManager {
     }
 
 
+    /**
+     *
+     * 更新联系人的数据库 ；
+     * @return
+     */
+    public void updateConacts(String type ,String labels ,String username){
+        ContentValues cv =new ContentValues() ;
+        cv.put("type",type);
+        cv.put("contactLabelIds",labels);
+        db.update(DatabaseHelper.TABLE_NAME_RConact,cv,"username = ?",new String[]{username});
+    }
+
     public String getUpdateTime(String uin){
         Cursor c = db.rawQuery("SELECT * FROM " + DatabaseHelper.TABLE_NAME_UPDATE_TIME +" where uin = "+uin ,
                 null);
@@ -214,22 +175,54 @@ public class DbManager {
         return  updateTime ;
     }
 
-    public void deleteConnacts(ArrayList<RConact> rConacts){
-        for (RConact rConact : rConacts) {
-            db.delete(DatabaseHelper.TABLE_NAME_RConact,"username = ?",new String []{rConact.getUsername()}) ;
+
+    /**
+     * 添加数据库中的联系人 ;
+     * @param conacts
+     */
+    public void addRconact(HashMap<String ,RConact> conacts){;
+
+
+        String sql = "insert into "+DatabaseHelper.TABLE_NAME_RConact+"(username,alias,nikcname,type ,contactLabelIds) values(?,?,?,?,?)";
+        SQLiteStatement stat = db.compileStatement(sql);
+        db.beginTransaction();
+        Iterator iter = conacts.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry entry = (Map.Entry) iter.next();
+            RConact con = (RConact) entry.getValue();
+            stat.bindString(1, con.getUsername());
+            stat.bindString(2, con.getAlias());
+            stat.bindString(3, con.getNickname());
+            stat.bindString(4, con.getType());
+            if(!TextUtils.isEmpty(con.getContactLabelIds()))
+            stat.bindString(5, con.getContactLabelIds());
+            stat.executeInsert();
+        }
+        db.setTransactionSuccessful();
+        db.endTransaction();
+        db.close();
+    }
+    /**
+     * 删除数据库中的联系人；
+     * @param rConacts
+     */
+    public void deleteConnacts(HashMap<String ,RConact> rConacts){
+        Iterator iterator =rConacts.entrySet().iterator();
+        while (iterator.hasNext()){
+            Map.Entry<String,RConact> entry = (Map.Entry<String, RConact>) iterator.next();
+            RConact rConact =entry.getValue() ;
+            db.delete(DatabaseHelper.TABLE_NAME_RConact," username = ?",new String []{rConact.getUsername()}) ;
         }
     }
+
+
+
+
+
 
     public void deleteTags (ArrayList<Tag> tags){
         for (Tag tag : tags) {
             db.delete(DatabaseHelper.TABLE_NAME_TAG,"name = ?" ,new String[]{tag.getName()});
-        }
-    }
-
-    public void deleteLabelConacts(ArrayList<LabelConact> labelConacts){
-
-        for (LabelConact labelConact : labelConacts) {
-            db.delete(DatabaseHelper.TABLE_NAME_LABELCONACT,"username = ? and labelid = ? ",new String []{labelConact.getRconact().getUsername(),labelConact.getLabel().getLabelID()}) ;
         }
     }
 
@@ -308,15 +301,6 @@ public class DbManager {
         return  false ;
     }
 
-
-
-
-    public void deleteLabels(ArrayList<Label> labels){
-        for (Label label : labels) {
-            db.delete(DatabaseHelper.TABLE_NAME_LABEL,"labelid = ?",new String []{label.getLabelID()});
-        }
-    }
-
     /**
      * delete old person
      *
@@ -347,71 +331,30 @@ public class DbManager {
     }
 
 
-    public List<LabelConact> queryLabelConact(){
-
-        ArrayList<LabelConact> labelConacts =new ArrayList<>() ;
-        Cursor c = queryTheCursor(DatabaseHelper.TABLE_NAME_LABELCONACT);
-        while (c.moveToNext())
-        {
-            LabelConact lableCon =new LabelConact() ;
-            Label label =new Label() ;
-            RConact rConact =new RConact() ;
-            label.setLabelID(c.getString(c.getColumnIndex("labelid")));
-            label.setLabelName(c.getString(c.getColumnIndex("labelname")));
-            rConact.setUsername(c.getString(c.getColumnIndex("username")));
-            if(TextUtils.isEmpty(c.getString(c.getColumnIndex("alias")))){
-            rConact.setAlias(c.getString(c.getColumnIndex("username")));
-            }else{
-            rConact.setAlias(c.getString(c.getColumnIndex("alias")));}
-            lableCon.setLabel(label);
-            lableCon.setRconact(rConact);
-            labelConacts.add(lableCon);
-        }
-        c.close();
-        return labelConacts;
-    }
-
-
-    public List<Label> queryLabels (){
-
-        ArrayList<Label> lables =new ArrayList<>() ;
-        Cursor c = queryTheCursor(DatabaseHelper.TABLE_NAME_LABEL);
-        while (c.moveToNext())
-        {
-            Label lable =new Label() ;
-            lable.setLabelID(c.getString(c.getColumnIndex("labelid")));
-            lable.setLabelName(c.getString(c.getColumnIndex("labelname")));
-            lables.add(lable);
-        }
-        c.close();
-        return lables;
-    }
-
-
-    public List<RConact> quryForRconacts(){
-        ArrayList<RConact> rConacts =new ArrayList<RConact>() ;
-
+    /**
+     * 本地数据库获得数据 ;
+     * @return
+     */
+    public HashMap<String ,RConact> quryForRconacts(){
+         HashMap<String,RConact> rConacts =new HashMap<String,RConact>();
         Cursor c = queryTheCursor(DatabaseHelper.TABLE_NAME_RConact);
         while (c.moveToNext())
         {
             RConact rConact = new RConact();
-            rConact.setUsername(c.getString(c.getColumnIndex("talker")));
-
+            rConact.setUsername(c.getString(c.getColumnIndex("username")));
             rConact.setType(c.getString(c.getColumnIndex("type")));
-
-            rConact.setTalker(c.getString(c.getColumnIndex("talker")));
-
             if(!TextUtils.isEmpty(c.getString(c.getColumnIndex("contactLabelIds")))){
-            rConact.setContactLabelIds(c.getString(c.getColumnIndex("contactLabelIds")));
+              rConact.setContactLabelIds(c.getString(c.getColumnIndex("contactLabelIds")));
+            }else{
+                rConact.setContactLabelIds("");
             }
-
             if(!TextUtils.isEmpty(c.getString(c.getColumnIndex("alias")))){
-            rConact.setAlias(c.getString(c.getColumnIndex("alias")));}
+                rConact.setAlias(c.getString(c.getColumnIndex("alias")));}
             else{
-                rConact.setAlias(c.getString(c.getColumnIndex("talker")));
+                rConact.setAlias(c.getString(c.getColumnIndex("username")));
             }
             rConact.setNickname(c.getString(c.getColumnIndex("nikcname")));
-            rConacts.add(rConact) ;
+            rConacts.put(rConact.getUsername(),rConact) ;
         }
         c.close();
         return rConacts;

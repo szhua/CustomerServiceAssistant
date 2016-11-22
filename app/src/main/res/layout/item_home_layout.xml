@@ -41,7 +41,7 @@
                 android:layout_width="0dp"
                 android:layout_weight="6"
                 android:layout_height="wrap_content"
-                android:text="王小贱"
+                android:text="客服"
                 android:singleLine="true"
                 android:textSize="@dimen/name_text_size"
                 android:textColor="@color/text_color_normal"
@@ -54,7 +54,6 @@
                 android:layout_width="0dp"
                 android:layout_weight="4"
                 android:layout_height="wrap_content"
-                android:text="2016-05-15  18:36"
                 android:paddingRight="@dimen/common16dp"
                 android:gravity="right"
                 android:textSize="@dimen/date_text_size"
@@ -75,7 +74,6 @@
             android:maxLines="5"
             android:paddingRight="@dimen/common10dp"
             android:ellipsize="end"
-            android:text="高乐美嘉到底有没有效果家长说了算。非常感谢家长的反馈，祝孩子早日恢复！"
             />
 
 
@@ -121,7 +119,6 @@
                     android:id="@+id/collect_num"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="885"
                     android:textSize="@dimen/name_text_size"
                     android:textColor="@color/collect_color"
                     />
@@ -151,7 +148,6 @@
                     android:id="@+id/tranform_num"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="885"
                     android:textSize="@dimen/name_text_size"
                     android:textColor="@color/ss"
                     />

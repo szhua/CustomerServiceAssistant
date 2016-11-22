@@ -13,8 +13,6 @@ public class DatabaseHelper  extends SQLiteOpenHelper{
     private static final int version = 1; //数据库版本
     public static final String TABLE_NAME_User ="user" ;
     public static final String TABLE_NAME_RConact ="rconact" ;
-    public static final String TABLE_NAME_LABEL ="label" ;
-    public static final String TABLE_NAME_LABELCONACT ="lc" ;
     public static final String TABLE_NAME_TAG ="tag";
     public static final String TABLE_NAME_MATARIAL_COLLECT = "collectmatrial" ;
     public static final String TABLE_NAME_UPDATE_TIME ="uoload_time" ;
@@ -28,10 +26,6 @@ public class DatabaseHelper  extends SQLiteOpenHelper{
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-     //   String sql1 ="CREATE TABLE person (personid integer primary key autoincrement, name varchar(20))" ;
-
-
-
 
 
         String sql = "create table user( id integer PRIMARY KEY  autoincrement , nickName varchar(30) ," +
@@ -41,26 +35,12 @@ public class DatabaseHelper  extends SQLiteOpenHelper{
                 "uin varchar(40) not null);";
         db.execSQL(sql);
 
-        String sql2 = "create table rconact( id integer PRIMARY KEY  autoincrement , "  +
-                "username varchar(30)  , " +
+        String sql2 = "create table rconact( username  default  ''  PRIMARY KEY   , "  +
                 "alias varchar(30) null ," +
                 "nikcname varchar(20) not null ," +
                 "type varchar(20) not null ," +
-                "talker varchar(20) not null ,"+
                 "contactLabelIds text null ) ;";
-
-
         db.execSQL(sql2);
-
-
-        String sql4 ="create table lc ( id integer PRIMARY KEY  autoincrement , " +
-                "labelid varchar(10) not null ," +
-                "labelname varchar (60) not null , " +
-                "username  varchar (60) not null , " +
-                "alias varchar (60) not null "  +
-                ") ;" ;
-
-        db.execSQL(sql4);
 
 
         String sql5 ="create table tag ( id integer PRIMARY KEY  autoincrement , " +
@@ -72,7 +52,7 @@ public class DatabaseHelper  extends SQLiteOpenHelper{
         String sql6 ="create table collectmatrial ( id integer PRIMARY KEY  autoincrement , " +
                 "createtime varchar(20) not null ," +
                 "material_id varchar(10) not null ," +
-                "json  text not null " +
+                "json  text not null"+
                 ") ;" ;
         db.execSQL(sql6);
 
@@ -82,14 +62,6 @@ public class DatabaseHelper  extends SQLiteOpenHelper{
                 "uin varchar(10) not null " +
                 ") ;" ;
         db.execSQL(sql7);
-
-
-        String sql3 ="create table label ( id integer PRIMARY KEY  autoincrement , " +
-                "labelid varchar(10) not null ," +
-                "labelname varchar (60) not null "  +
-                ") ;" ;
-        db.execSQL(sql3);
-
 
     }
 

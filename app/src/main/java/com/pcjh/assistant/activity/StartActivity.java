@@ -7,18 +7,16 @@ import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
+import android.widget.Toast;
 
 import com.mengma.asynchttp.RequestCode;
 import com.mengma.asynchttp.interf.INetResult;
 import com.pcjh.assistant.R;
-import com.pcjh.assistant.Service1;
+import com.pcjh.assistant.WorkService;
 import com.pcjh.assistant.base.AppHolder;
 import com.pcjh.assistant.base.BaseActivity;
 import com.pcjh.assistant.dao.InitDao;
 import com.pcjh.assistant.db.DbManager;
-import com.pcjh.assistant.entity.HomeEntity;
 import com.pcjh.assistant.entity.UserInfo;
 import com.pcjh.assistant.entity.Users;
 import com.pcjh.assistant.util.ChmodUtil;
@@ -35,13 +33,9 @@ import net.sqlcipher.database.SQLiteDatabaseHook;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.sql.Time;
 import java.util.ArrayList;
-import java.util.Timer;
 
 import butterknife.ButterKnife;
-import butterknife.InjectView;
-import butterknife.OnClick;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
@@ -51,10 +45,8 @@ import rx.schedulers.Schedulers;
 
 public class StartActivity extends BaseActivity implements INetResult{
 
-    @InjectView(R.id.nextBt)
-    Button nextBt;
-    private InitDao initDao;
 
+    private InitDao initDao;
     private String Imei;
     private String uin;
     private String password;
@@ -66,6 +58,7 @@ public class StartActivity extends BaseActivity implements INetResult{
     private DataInputStream is;
     private SharedPreferences  mPreferences;
     private boolean isRoot =true;
+    private DbManager dbManager;
 
 
     @Override
@@ -73,8 +66,9 @@ public class StartActivity extends BaseActivity implements INetResult{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_start);
         ButterKnife.inject(this);
-//  initDao =new InitDao(this,this) ;
-//    initDao.get_token("123456");
+
+
+        dbManager =new DbManager(this) ;
         Root.getInstance().getRoot(new Root.IGotRootListener() {
             @Override
             public void onGotRootResult(boolean hasRoot) {
@@ -108,65 +102,70 @@ public class StartActivity extends BaseActivity implements INetResult{
                                     @Override
                                     public void onNext(UserInfo userInfo) {
                                         Log.i("leilei", "nickname" +userInfo.getNickName());
+                                        if(TextUtils.isEmpty(userInfo.getWxNumber())){
+                                            userInfo.setWxNumber(userInfo.getWxId());
+                                        }
                                         AppHolder.getInstance().setUser(userInfo);
-                                        initDao =new InitDao(StartActivity.this,StartActivity.this) ;
-                                        initDao.get_token("shuweineng888");
+                                        SharedPrefsUtil.putValue(StartActivity.this,"wx",AppHolder.getInstance().getUser().getWxNumber());
+                                        initDao =new InitDao(StartActivity.this,StartActivity.this);
+                                        initDao.get_token(userInfo.getWxNumber());
                                     }
                                 });
                 }
-                }
+                }}
 
-            }
         });
     }
 
     @Override
     public void onRequestSuccess(int requestCode) {
+        super.onRequestSuccess(requestCode);
         if(requestCode==RequestCode.INITSUCESS) {
             if(isRoot){
-          // Log.i("szhua", "result" + initDao.getJson());
+            Log.i("szhua", "resultsss" + initDao.getJson());
             String token = initDao.getToken();
             AppHolder.getInstance().setToken(token);
             Users users = AppHolder.getInstance().getUsers();
             SharedPrefsUtil.putValue(StartActivity.this, "token", token);
-            Intent intent = new Intent(StartActivity.this, HomeActivity.class);
-            startActivity(intent);
             SharedPrefsUtil.putValue(StartActivity.this, "uin", users.getUin());
             SharedPrefsUtil.putValue(StartActivity.this, "password", users.getPassword());
             SharedPrefsUtil.putValue(StartActivity.this, "dbPath", users.getDbPath());
             SharedPrefsUtil.putValue(StartActivity.this, "token", token);
             SharedPrefsUtil.putValue(StartActivity.this, "wxid", AppHolder.getInstance().getUser().getWxId());
-            startService(new Intent(StartActivity.this, Service1.class));
-            /**
-             *  public String uin ;
-             public String password ;
-             public String dbPath ;
-             public String nickName ;
-             public String face ;
-             public String contactLabelIds ;
-             public String userId ;
-             */
 
-            mPreferences = getSharedPreferences("AutoStart", ContextWrapper.MODE_PRIVATE);
-            boolean bStart = mPreferences.getBoolean("AddToAuto", false);
-            SharedPreferences.Editor editor = mPreferences.edit();
-            editor.putBoolean("AddToAuto", true);
-            editor.commit();}else{
+            new Thread(){
+                @Override
+                public void run() {
+                    Intent intent = new Intent(StartActivity.this, HomeActivity.class);
+                    startActivity(intent);
+                    finish();
+                    try {
+                        sleep(2000);
+                        startService(new Intent(StartActivity.this, WorkService.class));
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }.start();
+
+            }else{
                 Log.i("szhua", "result" + initDao.getJson());
                 String token = initDao.getToken();
                 AppHolder.getInstance().setToken(token);
-                Users users = AppHolder.getInstance().getUsers();
                 SharedPrefsUtil.putValue(StartActivity.this, "token", token);
-                Intent intent = new Intent(StartActivity.this, HomeActivity.class);
+                Intent intent = new Intent(StartActivity.this , HomeActivity.class);
                 startActivity(intent);
+                finish();
             }
         }
     }
 
     @Override
     public void onRequestError(int requestCode, String errorInfo, int erro_code) {
+        super.onRequestError(requestCode,errorInfo,erro_code);
         if(requestCode== RequestCode.CODE_0){
-            Log.i("szhua","erro"+errorInfo) ;
+            Toast.makeText(this,"此微信号未被授权",Toast.LENGTH_SHORT).show();
+            finish();
         }
     }
 
@@ -194,7 +193,6 @@ public class StartActivity extends BaseActivity implements INetResult{
                     .map(new Func1<String, ArrayList<Users>>() {
                         @Override
                         public ArrayList<Users> call(String s) {
-                            DbManager dbManager = new DbManager(StartActivity.this);
                             return (ArrayList<Users>) dbManager.query();
                         }
                     })
@@ -203,7 +201,7 @@ public class StartActivity extends BaseActivity implements INetResult{
                         @Override
                         public void call(ArrayList<Users> userses) {
                             if (userses == null || userses.size() == 0) {
-                                UiUtil.showLongToast(StartActivity.this, "数据库暂无微信号！");
+                                Log.i("szhua","数据库暂无微信号");
                             }
                         }
                     })
@@ -222,9 +220,9 @@ public class StartActivity extends BaseActivity implements INetResult{
                                 AppHolder.getInstance().setUsers(users);;
                                 AppHolder.getInstance().getUser().setPassword(users.getPassword());
                                 Log.i("szhua",AppHolder.getInstance().getUsers().getDbPath());
-                                UiUtil.showLongToast(StartActivity.this, "从数据库获得用户成功！");
+                             Log.i("szhua", "从数据库获得用户成功！");
                             } else {
-                                UiUtil.showLongToast(StartActivity.this, "从数据库获得用户失败！");
+                                Log.i("szhua", "从数据库获取用户失败！");
                             }
                         }
                     })
@@ -328,7 +326,6 @@ public class StartActivity extends BaseActivity implements INetResult{
                     users.setPassword(pass);
                     users.setUin(uin);
                     Log.i("users", users.toString());
-                    DbManager dbManager = new DbManager(this);
                     ArrayList<Users> data = new ArrayList<>();
                     data.add(users);
                     dbManager.add(data);

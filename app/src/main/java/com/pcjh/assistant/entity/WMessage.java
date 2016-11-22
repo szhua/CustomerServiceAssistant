@@ -15,30 +15,55 @@ public class WMessage {
     public   String content ;
     public  String createTime ;
     public  String msgId ;
-    public  String type ;
     //1 为标识的时候说明是自己发出的；
-  public   String isSend ;
-  public   String headerIcon ;
- public    String displayName ;
-  public  String imgPath ;
- public boolean isVoice ;
-public boolean isImage ;
+    public   String isSend ;
+    public    String displayName ;
+    public  String imgPath ;
+    public boolean isVoice ;
+    public boolean isImage ;
     public int sendType ;
     public File  file ;
 
-    public String tag;
+   public String filesize ;
+    public String serverPath ;
+    public String filePath ;
+    public int uploadToServerCount ;
 
-    public void setTag(String tag) {
-        this.tag = tag;
+    public String getFilesize() {
+        return filesize;
     }
-    public String getTag() {
-        return tag;
+
+    public void setFilesize(String filesize) {
+        this.filesize = filesize;
     }
+
+    public int getUploadToServerCount() {
+        return uploadToServerCount;
+    }
+
+    public void addUploadCount() {
+        this.uploadToServerCount++;
+    }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
+
+    public String getServerPath() {
+        return serverPath;
+    }
+    public void setServerPath(String serverPath) {
+        this.serverPath = serverPath;
+    }
+
 
     public File getFile() {
         return file;
     }
-
     public void setFile(File file) {
         this.file = file;
     }
@@ -60,11 +85,11 @@ public boolean isImage ;
     }
     public void setImgPath(String imgPath) {
         if(imgPath.length()=="562220102116f6cbb02a3e5103".length()){
-          this.isVoice =true;
           String md5 =  Md5.getMd5Value(imgPath);
           String path1 =md5.substring(0,2) ;
           String path2 =md5.substring(2,4) ;
           imgPath ="/voice2/"+path1+"/"+path2+"/msg_"+imgPath+".amr";
+          this.isVoice =true;
         }
         if(!TextUtils.isEmpty(imgPath)){
             if(imgPath.contains("THUMBNAIL_DIRPATH://th_")){
@@ -87,12 +112,6 @@ public boolean isImage ;
         return displayName;
     }
 
-    public String getHeaderIcon() {
-        return headerIcon;
-    }
-    public void setHeaderIcon(String headerIcon) {
-        this.headerIcon = headerIcon;
-    }
     public String getTalker() {
         return talker;
     }
@@ -124,13 +143,6 @@ public boolean isImage ;
         this.msgId = msgId;
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
 
     public String getIsSend() {
         return isSend;
@@ -138,6 +150,7 @@ public boolean isImage ;
     public void setIsSend(String isSend) {
         this.isSend = isSend;
     }
+
     @Override
     public String toString() {
         return "WMessage{" +
@@ -145,8 +158,15 @@ public boolean isImage ;
                 ", content='" + content + '\'' +
                 ", createTime='" + createTime + '\'' +
                 ", msgId='" + msgId + '\'' +
-                ", type='" + type + '\'' +
                 ", isSend='" + isSend + '\'' +
+                ", displayName='" + displayName + '\'' +
+                ", imgPath='" + imgPath + '\'' +
+                ", isVoice=" + isVoice +
+                ", isImage=" + isImage +
+                ", sendType=" + sendType +
+                ", file=" + file +
+                ", serverPath='" + serverPath + '\'' +
+                ", filePath='" + filePath + '\'' +
                 '}';
     }
 }

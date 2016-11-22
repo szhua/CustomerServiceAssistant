@@ -14,7 +14,7 @@ public interface INetResult {
 
     public void onRequestError(int requestCode, String errorInfo,int error_code);
 
-    public void onRequestFaild(String errorNo, String errorMessage);
+    public void onRequestFaild(int requestCode ,String errorNo, String errorMessage);
 
     public void onNoConnect();
 }

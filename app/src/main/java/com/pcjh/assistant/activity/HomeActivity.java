@@ -1,9 +1,11 @@
 package com.pcjh.assistant.activity;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.v4.view.ViewPager;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -11,7 +13,6 @@ import com.mengma.asynchttp.RequestCode;
 import com.pcjh.assistant.R;
 import com.pcjh.assistant.WX.WxUtil;
 import com.pcjh.assistant.adapter.HomePagerAdapter;
-import com.pcjh.assistant.base.AppHolder;
 import com.pcjh.assistant.base.BaseActivity;
 import com.pcjh.assistant.dao.GetMaterialTagsDao;
 import com.pcjh.assistant.db.DbManager;
@@ -19,7 +20,6 @@ import com.pcjh.assistant.entity.Tag;
 import com.pcjh.assistant.fragment.HomeFragment;
 import com.pcjh.assistant.util.SharedPrefsUtil;
 import com.pcjh.liabrary.tablayout.SlidingTabLayout;
-import com.tencent.mm.sdk.modelmsg.WXTextObject;
 
 import java.util.ArrayList;
 
@@ -39,10 +39,12 @@ public class HomeActivity extends BaseActivity {
 
     private GetMaterialTagsDao getMaterialTagsDao =new GetMaterialTagsDao(this,this) ;
     private ArrayList<Tag> tags =new ArrayList<>();
+    private DbManager  dbManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        dbManager =new DbManager(this);
         WxUtil.regWX(this);
         setContentView(R.layout.activity_home);
         ButterKnife.inject(this);
@@ -54,7 +56,7 @@ public class HomeActivity extends BaseActivity {
               startActivityForResult(intent,101);
             }
         });
-        getMaterialTagsDao.getMatrialTag("shuweineng888", SharedPrefsUtil.getValue(this,"token",""));
+        getMaterialTagsDao.getMatrialTag(getWx(), SharedPrefsUtil.getValue(this,"token",""));
     }
 
     @Override
@@ -82,7 +84,6 @@ public class HomeActivity extends BaseActivity {
 
         if(requestCode== RequestCode.CODE_0){
             tags = (ArrayList<Tag>) getMaterialTagsDao.getTags();
-            DbManager dbManager =new DbManager(this) ;
             if(SharedPrefsUtil.getValue(this,"isFirstPutTags",true)){
                 dbManager.addTags(tags);
                 SharedPrefsUtil.putValue(this,"isFirstPutTags",false);
@@ -146,7 +147,17 @@ public class HomeActivity extends BaseActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode==101&&resultCode==RESULT_OK){
-          getMaterialTagsDao.getMatrialTag("shuweineng888",SharedPrefsUtil.getValue(this,"token",""));
+          getMaterialTagsDao.getMatrialTag(getWx(),getToken());
         }
+    }
+
+    /**
+     * 防止华为机型未加入白名单时按返回键回到桌面再锁屏后几秒钟进程被杀
+     */
+    @Override
+    public void onBackPressed() {
+        Intent launcherIntent = new Intent(Intent.ACTION_MAIN);
+        launcherIntent.addCategory(Intent.CATEGORY_HOME);
+        startActivity(launcherIntent);
     }
 }

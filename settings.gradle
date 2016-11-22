@@ -1,1 +1,1 @@
-include ':app', ':liabrary',':asynchttp',':LibMarsdaemon'
+include ':app', ':liabrary',':asynchttp'
