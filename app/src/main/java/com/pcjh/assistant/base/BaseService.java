@@ -76,7 +76,6 @@ public abstract class BaseService extends Service implements INetResult {
      * @return 数据库
      */
     public SQLiteDatabase initPSWdb(Users users) {
-        SQLiteDatabase.loadLibs(getBaseContext());
         SQLiteDatabaseHook hook = new SQLiteDatabaseHook() {
             public void preKey(SQLiteDatabase database) {
             }

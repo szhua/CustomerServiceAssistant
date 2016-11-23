@@ -68,12 +68,13 @@ public class StartActivity extends BaseActivity implements INetResult{
         ButterKnife.inject(this);
 
 
+
         dbManager =new DbManager(this) ;
         Root.getInstance().getRoot(new Root.IGotRootListener() {
             @Override
             public void onGotRootResult(boolean hasRoot) {
                 if (!hasRoot) {
-                    UiUtil.showLongToast(StartActivity.this, "手机未进行root");
+                    UiUtil.showLongToast(StartActivity.this, "未获得root权限");
                     initDao =new InitDao(StartActivity.this,StartActivity.this) ;
                     initDao.get_token("shuweineng888");
                     isRoot=false ;

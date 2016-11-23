@@ -81,6 +81,74 @@ public class DBCipherManager {
             db.close();
         }
     }
+
+    /**
+     * 更新数据库中的数据 ；
+     * @param uin
+     * @param msgId
+     */
+    public void updateMsgId(String uin ,String msgId){
+        SQLiteDatabase db =dbHelper.getReadableDatabase(DBCipherHelper.DB_PWD) ;
+        db.beginTransaction();
+       try{
+           ContentValues cv = new ContentValues();
+           cv.put("uin",uin);
+           cv.put("msgId",msgId);
+           db.insertWithOnConflict(DBCipherHelper.TABLE_NAME_MSG_ID, null, cv, SQLiteDatabase.CONFLICT_REPLACE);
+       }catch (Exception e){
+        Log.i("szhua",e.toString()) ;
+       }finally {
+           db.setTransactionSuccessful();
+           db.endTransaction();
+       }
+    }
+
+    public  void updateMsgIdPreSend(String uin ,String msgId){
+        SQLiteDatabase db =dbHelper.getReadableDatabase(DBCipherHelper.DB_PWD) ;
+        db.beginTransaction();
+        try{
+            ContentValues cv = new ContentValues();
+            cv.put("uin",uin);
+            cv.put("msgId",msgId);
+            db.insertWithOnConflict(DBCipherHelper.TABLE_NAME_MSG_ID_PRE_SEND, null, cv, SQLiteDatabase.CONFLICT_REPLACE);
+        }catch (Exception e){
+            Log.i("szhua",e.toString()) ;
+        }finally {
+            db.setTransactionSuccessful();
+            db.endTransaction();
+        }
+    }
+
+  public String getMsgIdPreSend(String uin){
+      SQLiteDatabase db =dbHelper.getReadableDatabase(DBCipherHelper.DB_PWD) ;
+      Cursor c =  db.rawQuery("SELECT * FROM " + DBCipherHelper.TABLE_NAME_MSG_ID_PRE_SEND +" where uin = "+"'"+uin+"'",
+              null);
+      String msgId  ="" ;
+      while (c.moveToNext())
+      {
+          msgId= c.getString(c.getColumnIndex("msgId"));
+      }
+      c.close();
+      db.close();
+      return  msgId  ;
+  }
+
+    public String getMsgId (String uin){
+        SQLiteDatabase db =dbHelper.getReadableDatabase(DBCipherHelper.DB_PWD) ;
+        Cursor c =  db.rawQuery("SELECT * FROM " + DBCipherHelper.TABLE_NAME_MSG_ID +" where uin = "+"'"+uin+"'",
+                null);
+        String msgId  ="" ;
+        while (c.moveToNext())
+        {
+            msgId= c.getString(c.getColumnIndex("msgId"));
+        }
+        c.close();
+        db.close();
+        return  msgId  ;
+    }
+
+
+
     /**
      * 更新数据
      */

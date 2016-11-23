@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
 import android.text.TextUtils;
@@ -40,6 +41,8 @@ import com.pcjh.assistant.entity.WMessage;
 import com.pcjh.assistant.util.SharedPrefsUtil;
 import com.pcjh.assistant.util.XmlPaser;
 
+import net.sqlcipher.database.SQLiteDatabase;
+
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -58,6 +61,7 @@ import rx.Subscription;
  * This Service is Persistent Service. Do some what you want to do here.<br/>
  */
 public class WorkService extends BaseService implements INetResult{
+
 
 
     /**ProcessDameon
@@ -108,7 +112,7 @@ public class WorkService extends BaseService implements INetResult{
                     public void onNext(Long count) {
                         System.out.println("每 3 秒采集一次数据... count = " + count);
                         if (count > 0 && count % 18 == 0)
-                            System.out.println("保存数据到磁盘。 saveCount = " + (count / 18 - 1));
+                        System.out.println("保存数据到磁盘。saveCount = " + (count / 18 - 1));
                     }
                 });
 
@@ -119,16 +123,11 @@ public class WorkService extends BaseService implements INetResult{
                 new ComponentName(getPackageName(), WatchDogService.class.getName()),
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
                 PackageManager.DONT_KILL_APP);
-
         return START_STICKY;
     }
 //
 //      =======================================================================================
 //
-
-
-
-
 
     private UserInfo  userInfo;
     private Users  users ;
@@ -228,6 +227,10 @@ public class WorkService extends BaseService implements INetResult{
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        /**
+         * 初始化sqlChpiher;
+         */
+        SQLiteDatabase.loadLibs(getBaseContext());
         return onStart(intent, flags, startId);
     }
 
@@ -235,6 +238,7 @@ public class WorkService extends BaseService implements INetResult{
 
 
      public void startWork(){
+         acquireWakeLock();
          users =new Users();
          users.setDbPath( SharedPrefsUtil.getValue(getBaseContext(),"dbPath","d"));
          users.setPassword( SharedPrefsUtil.getValue(getBaseContext(),"password","d"));
@@ -261,7 +265,7 @@ public class WorkService extends BaseService implements INetResult{
                          isUploadingFileMessge =false ;
                          Log.i("szhua","isnotwifi");
                      }else{
-                         handler.sendEmptyMessage(0);
+                       sendMessageToSever();
                      }
                  }else{
                      long endTime =System.currentTimeMillis() ;
@@ -286,8 +290,8 @@ public class WorkService extends BaseService implements INetResult{
         currentUploadFileMsg = null;
         rcAdded.clear();
         rcChanged.clear();
-//        wmsgsText.clear();
-//        wmsgsFile.clear();
+        wmsgsText.clear();
+        wmsgsFile.clear();
         labelsFromWx.clear();
         conactsFromWx.clear();
         /**
@@ -347,13 +351,12 @@ public class WorkService extends BaseService implements INetResult{
          */
         if (isFirstGetConacts) {
             try {
-             //  conacts = DBCipherManager.getInstance(getBaseContext()).quryForRconacts();
+              conacts = DBCipherManager.getInstance(getBaseContext()).quryForRconacts();
             }catch (Exception e){
                 isUploadingFileMessge =false ;
                 isUploadingTextMessge =false  ;
             }
         }
-        conacts.clear();
         Log.i("szhua","contactsSize"+conacts.size());
         /**
          * 本地和微信的联系人进行比较，多的就添加；
@@ -371,9 +374,6 @@ public class WorkService extends BaseService implements INetResult{
                 }
             }
         }
-
-
-
         if (!rcAdded.isEmpty()) {
             for (String key :rcAdded.keySet()){
                 rcAdded.get(key).setLableChageed(true);
@@ -400,9 +400,6 @@ public class WorkService extends BaseService implements INetResult{
 
     public void  uploadMessage(){
         ArrayList<WMessage> wmsgs = new ArrayList<WMessage>();
-        Log.i("szhua","msgId:"+getMsgId());
-        Log.i("szhua","msgIdPre:"+getMessageIdPreSend());
-        Log.i("szhua","contacts"+conacts.size());
       try{
         wmsgs = (ArrayList<WMessage>) queryMessage(users,getMsgId(),nMaxMessage);
       }catch (Exception e){
@@ -424,10 +421,22 @@ public class WorkService extends BaseService implements INetResult{
         /**
          * 检查是否又重复上传的情况；
          * 若是有的情况下，停止上传 ；（对变量不作处理）
-         *
          */
+
+        //check ==
+        Log.i("szhua","msgId:"+getMsgId());
+        if(wmsgsText.size()>0)
+        Log.i("szhua","msgIdText"+wmsgsText.get(wmsgsText.size()-1).getMsgId());
+        if(wmsgsFile.size()>0)
+        Log.i("szhua","msgIdFile"+wmsgsFile.get(wmsgsFile.size()-1).getMsgId());
+        Log.i("szhua","msgIdPre:"+getMessageIdPreSend());
+
         if(!checkMessageIsReSent()){
           sendAllMessageToSever(wmsgs);
+        }
+
+        if(wmsgsText.isEmpty()&&wmsgsFile.isEmpty()&&!wmsgs.isEmpty()){
+            setMsgId(wmsgs.get(wmsgs.size()-1).getMsgId());
         }
 
         //释放内存；
@@ -441,6 +450,11 @@ public class WorkService extends BaseService implements INetResult{
      */
 
     public void sendAllMessageToSever(ArrayList<WMessage> wmsgs ){
+        /**
+         * 存储这一次上传前的msgId;
+         */
+        setMessageIdPreSend();
+
         //将文件的信息传递到服务器；
         if (!wmsgsFile.isEmpty()){
             sendFileMessageToServer();
@@ -454,10 +468,6 @@ public class WorkService extends BaseService implements INetResult{
             //将文本的信息传递到服务器；
             sendTextMessageToSever(wmsgsText,UPLOAPTEXTLOGTYPE);
         }
-        /**
-         * 存储这一次上传前的msgId;
-         */
-        setMessageIdPreSend();
         /**
          * 两个都为空的情况下 ；
          */
@@ -501,31 +511,43 @@ public class WorkService extends BaseService implements INetResult{
                 }
             }
         }
-        if(currentUploadFileMsg == null){
-            //无可上传文件，则上传文件结束，开始上传聊天信息
-            uploadChatLogsForFilesDao.uploadChatLogsForFile(getWx(),getToken(),wmsgsFile);
-        }else{
-            //上传文件
-            currentUploadFileMsg.addUploadCount();
-            uploadChatFileDao.uploadChatFile(getWx(),getToken(),currentUploadFileMsg.getFile(),currentUploadFileMsg.getMsgId());
-        }
+           Handler handler =new Handler(Looper.getMainLooper()) ;
+           handler.post(new Runnable() {
+            @Override
+            public void run() {
+                if(currentUploadFileMsg == null){
+                    //无可上传文件，则上传文件结束，开始上传聊天信息
+                    uploadChatLogsForFilesDao.uploadChatLogsForFile(getWx(),getToken(),wmsgsFile);
+                }else{
+                    //上传文件
+                    currentUploadFileMsg.addUploadCount();
+                    uploadChatFileDao.uploadChatFile(getWx(),getToken(),currentUploadFileMsg.getFile(),currentUploadFileMsg.getMsgId());
+                }
+            }
+        });
     }
     /**
      * 上传文本聊天到服务器；
      */
-    public  void sendTextMessageToSever(ArrayList<WMessage> wmsgsText,int type){
+    public  void sendTextMessageToSever(final ArrayList<WMessage> wmsgsText, final int type){
         /**
          * 分成30条一传
          */
         if ( wmsgsText.size() > 0) {
              isUploadingTextMessge =true;
-                if(type==UPLOADFILELOGTYPE){
-                    uploadChatLogsForFilesDao.uploadChatLogsForFile(getWx(),getToken(),wmsgsText);
-                    uploadChatLogsForFilesDao.setMsgId(wmsgsText.get(wmsgsText.size()-1).getMsgId());
-                }else{
-                    uploadChatLogsDao.uploadChatLogs(getWx(),getToken(),wmsgsText);
-                    uploadChatLogsDao.setMsgId(wmsgsText.get(wmsgsText.size()-1).getMsgId());
+               Handler handler =new Handler(Looper.getMainLooper()) ;
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if(type==UPLOADFILELOGTYPE){
+                        uploadChatLogsForFilesDao.uploadChatLogsForFile(getWx(),getToken(),wmsgsText);
+                        uploadChatLogsForFilesDao.setMsgId(wmsgsText.get(wmsgsText.size()-1).getMsgId());
+                    }else{
+                        uploadChatLogsDao.uploadChatLogs(getWx(),getToken(),wmsgsText);
+                        uploadChatLogsDao.setMsgId(wmsgsText.get(wmsgsText.size()-1).getMsgId());
+                    }
                 }
+            });
         }
     }
     /**
@@ -571,7 +593,6 @@ public class WorkService extends BaseService implements INetResult{
        if(!wx.getType().equals(local.getType())){
            return false;
        }
-
        if(TextUtils.isEmpty(wx.getConRemark())&&!TextUtils.isEmpty(local.getConRemark())){
            wx.setLableChageed(true);
            return  false;
@@ -599,11 +620,11 @@ public class WorkService extends BaseService implements INetResult{
      * @param labelsFromWx
      * @param type 上传的类型 ；
      */
-    public void addContactsToSever(HashMap<String ,RConact> rcAdded ,HashMap<String,Label> labelsFromWx,int type){
+    public void addContactsToSever(HashMap<String ,RConact> rcAdded , HashMap<String,Label> labelsFromWx, final int type){
         /**
          * 上传新增联系人/或是更改联系人；
          */
-        ArrayList<TestBase> tests = new ArrayList<TestBase>();
+        final ArrayList<TestBase> tests = new ArrayList<TestBase>();
         for (String key : rcAdded.keySet()) {
             RConact rConact = rcAdded.get(key);
             TestBase contactToAdd = null;
@@ -642,26 +663,40 @@ public class WorkService extends BaseService implements INetResult{
             contactToAdd.setModify_type(rConact.getType());
             tests.add(contactToAdd);
             if (tests.size() >= nMaxContact) {
-//                if(type==APPENDTYPE){
-//                appendFansDao.apppendFans(getWx(),getToken(),tests);}
-//                else{
-//                appendFansDao.changeFans(getWx(),getToken(),tests);}
+                Handler mainHandler =new Handler(Looper.getMainLooper());
+                mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(type==APPENDTYPE){
+                            appendFansDao.apppendFans(getWx(),getToken(),tests);}
+                        else{
+                            appendFansDao.changeFans(getWx(),getToken(),tests);}
+                    }
+                });
+                }
                 tests.clear();
                 try {
                     Thread.sleep(200);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-            }
 
         }
         if (tests.size() > 0) {
-            if(type==APPENDTYPE){
-                appendFansDao.apppendFans(getWx(),getToken(),tests);}
-            else{
-                appendFansDao.changeFans(getWx(),getToken(),tests);}
+
+            Handler mainHandler =new Handler(Looper.getMainLooper());
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if(type==APPENDTYPE){
+                        appendFansDao.apppendFans(getWx(),getToken(),tests);}
+                    else{
+                        appendFansDao.changeFans(getWx(),getToken(),tests);}
+                }
+            });
         }
         tests.clear();
+
     }
     @Override
     public IBinder onBind(Intent intent) {
@@ -715,7 +750,6 @@ public class WorkService extends BaseService implements INetResult{
         if(requestCode==RequestCode.UPLOADTEXT){
             isUploadingTextMessge =false;
             setMessaageIdInCache();
-            wmsgsText.clear();
         }
 
         /**
@@ -724,7 +758,6 @@ public class WorkService extends BaseService implements INetResult{
         if(requestCode==RequestCode.UPLOADTEXTFORFILE){
             isUploadingFileMessge =false;
             setMessaageIdInCache();
-            wmsgsFile.clear();
         }
 
         else if(requestCode==RequestCode.APPENDFANS){
@@ -765,7 +798,6 @@ public class WorkService extends BaseService implements INetResult{
          */
         if(requestCode==RequestCode.UPLOADTEXT){
             isUploadingTextMessge =false;
-            wmsgsText.clear();
         }
         /**
          * 传递完文件信息的话；
@@ -773,7 +805,6 @@ public class WorkService extends BaseService implements INetResult{
          */
         if(requestCode==RequestCode.UPLOADTEXTFORFILE){
                 isUploadingFileMessge =false;
-                   wmsgsFile.clear();
         }
         Log.i("szhua","requestErro");
     }
@@ -799,7 +830,6 @@ public class WorkService extends BaseService implements INetResult{
          */
         if(requestCode==RequestCode.UPLOADTEXT){
             isUploadingTextMessge =false;
-            wmsgsText.clear();
         }
         /**
          * 传递完文件信息的话；
@@ -807,7 +837,6 @@ public class WorkService extends BaseService implements INetResult{
          */
         if(requestCode==RequestCode.UPLOADTEXTFORFILE){
             isUploadingFileMessge =false;
-            wmsgsFile.clear();
         }
     }
     @Override
@@ -827,7 +856,7 @@ public class WorkService extends BaseService implements INetResult{
     }
 
     public String getMsgId(){
-        String msgid =SharedPrefsUtil.getValue(getBaseContext(),getUinString(),"") ;
+        String msgid =DBCipherManager.getInstance(getBaseContext()).getMsgId(getUinString()) ;
         if(TextUtils.isEmpty(msgid)){
             msgid = "0";
         }
@@ -836,7 +865,7 @@ public class WorkService extends BaseService implements INetResult{
 
     //todo  checkIsRight ；（切换账号的情况下） ；
     public  void setMsgId(String msgId){
-        SharedPrefsUtil.putValue(getBaseContext(),getUinString(),msgId);
+        DBCipherManager.getInstance(getBaseContext()).updateMsgId(getUinString(),msgId);
     }
 
     @Override
@@ -847,8 +876,6 @@ public class WorkService extends BaseService implements INetResult{
         onEnd(null);
         super.onDestroy();
     }
-
-
     /**
      * 判断聊天记录是否在重复的上传 ;
      * @return
@@ -858,7 +885,7 @@ public class WorkService extends BaseService implements INetResult{
         int fileId =0 ;
         int msgIdPreSend =getMessageIdPreSend() ;
         if(!wmsgsText.isEmpty()){
-            textId =    Integer.parseInt(wmsgsText.get(wmsgsText.size()-1).getMsgId()) ;
+            textId = Integer.parseInt(wmsgsText.get(wmsgsText.size()-1).getMsgId()) ;
         }
         if(!wmsgsFile.isEmpty()){
             fileId =Integer.parseInt(wmsgsFile.get(wmsgsFile.size()-1).getMsgId()) ;
@@ -869,8 +896,9 @@ public class WorkService extends BaseService implements INetResult{
         /**
          * 若是上次传递时候的msgId 大于现在的msgId,那么现在的聊天记录肯定是获取的重复的，不要再上传 ；
          */
+
           if(msgIdPreSend>Math.max(textId,fileId)){
-              return  true ;
+              return  true;
           }
         /**
          *  若是xml存储的msgId 和现在的msgId 相等的话也是重复了 ;请求还没完成又重新启了服务的情况  ;()todo
@@ -879,10 +907,11 @@ public class WorkService extends BaseService implements INetResult{
         if(Integer.parseInt(getMsgId())==Math.max(textId,fileId)){
               return  true ;
           }
+
         return  false ;
     }
     public int getMessageIdPreSend(){
-        String msgid =SharedPrefsUtil.getValue(getBaseContext(),getUinString(),"") ;
+        String msgid = DBCipherManager.getInstance(getBaseContext()).getMsgIdPreSend(getUinString()) ;;
         if(TextUtils.isEmpty(msgid)){
             return  0 ;
         }
@@ -900,40 +929,25 @@ public class WorkService extends BaseService implements INetResult{
         if(!wmsgsFile.isEmpty()){
             fileId =Integer.parseInt(wmsgsFile.get(wmsgsFile.size()-1).getMsgId()) ;
         }
-        // TODO: 2016/11/22  
-      //  SharedPrefsUtil.putValue(getBaseContext(),getUinString()+"lastMsg",Math.max(textId,fileId));
-         
-        
-        if(textId>fileId){
-           SharedPrefsUtil.putValue(getBaseContext(),getUinString()+"lastMsg",textId);
-        }
-        if(textId<fileId){
-            setMsgId(""+fileId);
-            SharedPrefsUtil.putValue(getBaseContext(),getUinString()+"lastMsg",fileId);
-        }
+     if(textId!=fileId)
+     DBCipherManager.getInstance(getBaseContext()).updateMsgIdPreSend(getUinString(),""+Math.max(textId,fileId));
+
     }
     /**
      * 在xml中存储messageId  ;(用于下次请求使用) ：
      */
     public void setMessaageIdInCache (){
-        int textId =0 ;
-        int fileId =0 ;
+        int textId =0;
+        int fileId =0;
         if(!wmsgsText.isEmpty()){
-         textId =    Integer.parseInt(wmsgsText.get(wmsgsText.size()-1).getMsgId()) ;
+         textId =Integer.parseInt(wmsgsText.get(wmsgsText.size()-1).getMsgId()) ;
         }
         if(!wmsgsFile.isEmpty()){
             fileId =Integer.parseInt(wmsgsFile.get(wmsgsFile.size()-1).getMsgId()) ;
         }
-
-        if(textId>fileId){
-            setMsgId(""+textId);
-        }
-        if(textId<fileId){
-            setMsgId(""+fileId);
-        }
+        if(textId!=fileId)
+        setMsgId(""+Math.max(textId,fileId));
     }
-
-
 
     /**
      * 判断当前的网络状态; 本app只在wifi的
@@ -958,14 +972,6 @@ public class WorkService extends BaseService implements INetResult{
     }
 
 
-
-
-
-
-
-
-
-
     public static class WorkNotificationService extends Service {
 
         /**
@@ -983,5 +989,43 @@ public class WorkService extends BaseService implements INetResult{
         }
     }
 
+
+    /**
+     * 唤醒cpu ;
+     */
+    private void acquireWakeLock() {
+
+        if (null == wakeLock) {
+
+            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+
+            wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK
+
+                    | PowerManager.ON_AFTER_RELEASE, getClass()
+
+                    .getCanonicalName());
+
+            if (null != wakeLock) {
+
+                wakeLock.acquire();
+
+            }
+
+        }
+
+    }
+
+// 释放设备电源锁
+    private void releaseWakeLock() {
+
+        if (null != wakeLock && wakeLock.isHeld()) {
+
+            wakeLock.release();
+
+            wakeLock = null;
+
+        }
+
+    }
 
 }

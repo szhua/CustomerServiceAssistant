@@ -16,6 +16,8 @@ public class DBCipherHelper extends SQLiteOpenHelper {
     public static final String DB_PWD="whoislcj";//数据库密码
     public static final String TABLE_NAME_RConact ="rconact" ;
     private static final int DB_VERSION = 1;// 数据库版本
+    public static final String TABLE_NAME_MSG_ID ="msgId" ;
+    public static final String TABLE_NAME_MSG_ID_PRE_SEND ="msgIdPreSend" ;
 
     public DBCipherHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
         super(context, name, factory, version);
@@ -44,8 +46,15 @@ public class DBCipherHelper extends SQLiteOpenHelper {
                 "type varchar(20) not null ," +
                 "conRemark varchar(20)  null ," +
                 "contactLabelIds text null ) ;";
+         String sql2 ="create table msgId (uin primary key ," +
+                 "msgId varchar(20) null ) ;"  ;
+         String sql3 ="create table msgIdPreSend (uin primary key ," +
+                "msgId varchar(20) null ) ;"  ;
+
         try {
             db.execSQL(sql);
+            db.execSQL(sql2);
+            db.execSQL(sql3);
         } catch (SQLException e) {
             Log.e(TAG, "onCreate " + TABLE_NAME_RConact + "Error" + e.toString());
             return;

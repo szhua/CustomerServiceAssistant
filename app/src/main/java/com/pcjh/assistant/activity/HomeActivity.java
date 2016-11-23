@@ -56,6 +56,11 @@ public class HomeActivity extends BaseActivity {
               startActivityForResult(intent,101);
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         getMaterialTagsDao.getMatrialTag(getWx(), SharedPrefsUtil.getValue(this,"token",""));
     }
 
