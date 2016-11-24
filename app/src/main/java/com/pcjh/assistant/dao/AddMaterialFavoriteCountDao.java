@@ -31,7 +31,7 @@ public class AddMaterialFavoriteCountDao  extends IDao
         requestParams.put("token",token);
         requestParams.put("material_id",material_id);
         postRequest(Constant.BASE_URL+Constant.ADD_MATERIAL_FAVORITE_COUNT,requestParams, RequestCode.CODE_5);
-        this.postion =postion ;
+        this.postion =postion;
     }
     public int getPostion() {
         return postion;
@@ -39,7 +39,7 @@ public class AddMaterialFavoriteCountDao  extends IDao
     @Override
     public void onRequestSuccess(JsonNode result, int requestCode) throws IOException {
         if(requestCode==RequestCode.CODE_5){
-            favorite_count =result.findValue("favorite_count").asInt() ;
+            favorite_count =result.findValue("favorite_count").asInt();
         }
     }
 }

@@ -21,32 +21,18 @@ public class XmlPaser {
         XmlPullParser pullParser = Xml.newPullParser();
         pullParser.setInput(xml, "UTF-8"); //为Pull解释器设置要解析的XML数据
         int event = pullParser.getEventType();
-
-
         while (event != XmlPullParser.END_DOCUMENT){
             switch (event) {
                 case XmlPullParser.START_DOCUMENT:
                     break;
                 case XmlPullParser.START_TAG:
-//                    if (TAGNAME.equals(pullParser.getName())){
-//                         event =pullParser.next();
-//                         value =pullParser.getAttributeValue(1);
-//                    }else{
-//                    }
-                    event =pullParser.next() ;
-                    Log.i("xmlparser","name"+pullParser.getName()) ;
                     if(pullParser.getAttributeCount()>0){
-                    Log.i("xmlparser","name1:"+pullParser.getAttributeName(0)) ;
-                    Log.i("xmlparser","value1:"+pullParser.getAttributeValue(0)) ;
-                    if("default_uin".equals(pullParser.getAttributeValue(0))){
+                    if(TAGNAME.equals(pullParser.getAttributeValue(0))){
                         if(pullParser.getAttributeCount()>1){
-                            Log.i("xmlparser","name2:"+pullParser.getAttributeName(1));
-                            Log.i("xmlparser","value2:"+pullParser.getAttributeValue(1)) ;
                            value =pullParser.getAttributeValue(1);
                         }
                     }
                     }
-
                     break;
                 case XmlPullParser.END_TAG:
                     pullParser.next() ;
@@ -54,14 +40,11 @@ public class XmlPaser {
             }
             event = pullParser.next();
             Log.i("xmlparser","name"+pullParser.getName()) ;
-
         }
         return value;
     }
     public static String   getUidFromFile(){
-
         //tod  shared_prefs 的权限 ；
-
         String path ="/data/data/com.tencent.mm/shared_prefs/system_config_prefs.xml" ;
         File xmlFile =new File(path);
         ChmodUtil.setFileCanRead(xmlFile);

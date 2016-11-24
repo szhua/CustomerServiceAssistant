@@ -1,9 +1,15 @@
 package com.pcjh.assistant.entity;
 
 /**
- * Created by szhua on 2016/11/19.
+ * Created by szhua on 2016/11/24.
+ *
+ * 转换为json的联系人实体类 《base》；
+ *
  */
-public class TestBase {
+
+public class ContactForJsonBase {
+
+
     String fans_nickname ;
     String fans_wx ;
     String modify_time ;
@@ -41,7 +47,7 @@ public class TestBase {
 
     @Override
     public String toString() {
-        return "Test{" +
+        return "ContactForJsonBase {" +
                 ", fans_nickname='" + fans_nickname + '\'' +
                 ", fans_wx='" + fans_wx + '\'' +
                 ", modify_time='" + modify_time + '\'' +

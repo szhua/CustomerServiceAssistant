@@ -45,12 +45,8 @@ import rx.schedulers.Schedulers;
 /**
  * Created by szhua on 2016/11/9.
  */
-public abstract class BaseService extends Service implements INetResult {
-    protected Subscription subscription ;
+public  class BaseService extends Service implements INetResult {
     private InitDao  initDao;
-    private DataOutputStream os;
-    private DataInputStream  is;
-    private java.lang.Process process;
     private String  Imei;
     private String   uin;
     private String  password;
@@ -64,9 +60,7 @@ public abstract class BaseService extends Service implements INetResult {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if(subscription!=null){
-            subscription.unsubscribe();
-        }
+
     }
     //==================================================================================================
 
@@ -89,43 +83,10 @@ public abstract class BaseService extends Service implements INetResult {
         return db;
     }
 
-    public List<WMessage> _getWMessage(Users users , String createTimeP){
-        SQLiteDatabase db =initPSWdb(users) ;
-        /**
-         * where type = 1 设置type=1是为了过滤掉一些微信好的信息 ；
-         */
-        Cursor c =db.rawQuery("select content，talker ，createTime ，msgId ，type ，isSend ，imgPath ，alias  from message  " +
-                "where type in ( 1,3 ,34 ) and createTime  > "+createTimeP ,null) ;
-        ArrayList<WMessage> wMessages =new ArrayList<WMessage>();
-        while (c.moveToNext()) {
-            String content = c.getString(c.getColumnIndex("content"));
-            String talker = c.getString(c.getColumnIndex("talker"));
-            String createTime = c.getString(c.getColumnIndex("createTime"));
-            String msgId = c.getString(c.getColumnIndex("msgId"));
-            String isSend = c.getString(c.getColumnIndex("isSend"));
-            String imgPaht =c.getString(c.getColumnIndex("imgPath"));
-            String dispalayname =c.getString(c.getColumnIndex("alias"));
-            WMessage wmessage = new WMessage();
-            wmessage.setContent(content);
-            wmessage.setTalker(talker);
-            wmessage.setMsgId(msgId);
-            wmessage.setIsSend(isSend);
-            wmessage.setCreateTime(createTime);
-            if(!TextUtils.isEmpty(dispalayname)){
-                wmessage.setDisplayName(dispalayname);
-            }else {
-                wmessage.setDisplayName(talker);
-            }
-            if(!TextUtils.isEmpty(imgPaht)){
-                wmessage.setImgPath(imgPaht);
-            }
-            wMessages.add(wmessage) ;
-        }
-        c.close();
-        db.close();
-        return  wMessages ;
-    }
-
+    /**
+     * 从xml文件中获取uin ;
+     * @return
+     */
     public Observable<String> getUin(){
 
         Observable<String> observable =Observable.just("").map(new Func1<String, String>() {
@@ -137,17 +98,24 @@ public abstract class BaseService extends Service implements INetResult {
         return  observable ;
     }
 
+    /**
+     * 从微信中获取信息（指定条目的数据）;
+     * @param users
+     * @param msgIdd
+     * @param limitNum
+     * @return
+     * todo changeD in 2016/11/24
+     */
     public List<WMessage> queryMessage( Users users ,String msgIdd ,int limitNum){
         SQLiteDatabase db =initPSWdb(users) ;
         ArrayList<WMessage> wMessages =new ArrayList<WMessage>();
-        Cursor c =db.rawQuery("select content,talker,createTime,msgId,type,isSend,imgPath from message where msgId  > "
+        Cursor c =db.rawQuery("select content,talker,createTime,msgId,isSend,imgPath from message where msgId  > "
                 +msgIdd +" limit " +limitNum, null) ;
         while (c.moveToNext()) {
             String content = c.getString(c.getColumnIndex("content"));
             String talker = c.getString(c.getColumnIndex("talker"));
             String createTime = c.getString(c.getColumnIndex("createTime"));
             String msgId = c.getString(c.getColumnIndex("msgId"));
-            String type = c.getString(c.getColumnIndex("type"));
             String isSend = c.getString(c.getColumnIndex("isSend"));
             String imgPaht =c.getString(c.getColumnIndex("imgPath")) ;
             WMessage wmessage = new WMessage();
@@ -269,7 +237,7 @@ public abstract class BaseService extends Service implements INetResult {
                 });
     }
 
-    protected abstract void reGetMessage();
+
     @Override
     public void onRequestSuccess(int requestCode) {
         if(requestCode== RequestCode.INITSUCESS){
@@ -302,6 +270,11 @@ public abstract class BaseService extends Service implements INetResult {
          */
         SharedPrefsUtil.putValue(getBaseContext(),"isAuthoritid",false);
         Toast.makeText(getBaseContext(),"此微信号未被授权",Toast.LENGTH_SHORT).show();
+
+    }
+
+    @Override
+    public void onRequestFaild(int requestCode, String errorNo, String errorMessage) {
 
     }
     @Override
@@ -394,33 +367,6 @@ public abstract class BaseService extends Service implements INetResult {
         return null;
     }
 
-    //获得root的权限；
-    public void getRoot(){
-
-        try {
-            process = Runtime.getRuntime().exec("/system/xbin/su"); /*这里可能需要修改su
-的源代码 （注掉  if (myuid != AID_ROOT && myuid != AID_SHELL) {*/
-            os = new DataOutputStream(process.getOutputStream());
-            is = new DataInputStream(process.getInputStream());
-            os.writeBytes("/system/bin/ls" + " \n"); //这里可以执行具有root 权限的程序了
-            os.writeBytes(" exit \n");
-            os.flush();
-            process.waitFor();
-        } catch (Exception e) {
-            Log.e("szhua", "Unexpected error - Here is what I know:" + e.getMessage());
-        } finally {
-            try {
-                if (os != null) {
-                    os.close();
-                }
-                if (is != null) {
-                    is.close();
-                }
-                process.destroy();
-            } catch (Exception e) {
-            }
-        }// get the root privileges
-    }
 
 
     //已知密码和文件路径的情况下；
@@ -441,7 +387,13 @@ public abstract class BaseService extends Service implements INetResult {
         return userinfo;
     }
 
-
+    /**
+     * 从enMicriMsg.db这个数据库中获得用户的一些信息 ；
+     * @param dbFile
+     * @param pass
+     * @param isFromOld
+     * @return
+     */
     public UserInfo getDataWithSqlcipher(File dbFile, String pass, boolean isFromOld) {
         //获得最终的db文件并进行读取其中的数据；
         UserInfo userInfo = null;
@@ -518,7 +470,6 @@ public abstract class BaseService extends Service implements INetResult {
 
     //读取微信中的信息 ；
     public UserInfo readWeChatDatabase() {
-        getRoot();
         //此处用于读取 当前微信号的uin
         SQLiteDatabase.loadLibs(this);
         File testFile = new File("/data/data/com.tencent.mm/MicroMsg/");

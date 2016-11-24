@@ -33,12 +33,6 @@ public class DbManager {
     private Context context ;
 
 
-    private static DbManager ourInstance = new DbManager();
-
-    public static DbManager getInstance(Context context) {
-        ourInstance.context=context;
-        return ourInstance;
-    }
     private DbManager(){
     }
 
@@ -150,86 +144,29 @@ public class DbManager {
         db.update(DatabaseHelper.TABLE_NAME_UPDATE_TIME,cv,"uin = ?",new String[]{uin});
     }
 
-
     /**
-     *
-     * 更新联系人的数据库 ；
-     * @return
+     * 删除标签 ;
+     * @param tags
      */
-    public void updateConacts(String type ,String labels ,String username){
-        ContentValues cv =new ContentValues() ;
-        cv.put("type",type);
-        cv.put("contactLabelIds",labels);
-        db.update(DatabaseHelper.TABLE_NAME_RConact,cv,"username = ?",new String[]{username});
-    }
-
-    public String getUpdateTime(String uin){
-        Cursor c = db.rawQuery("SELECT * FROM " + DatabaseHelper.TABLE_NAME_UPDATE_TIME +" where uin = "+uin ,
-                null);
-        String updateTime ="" ;
-        while (c.moveToNext())
-        {
-         updateTime =c.getString(c.getColumnIndex("lastCreateTime"));
-        }
-        c.close();
-        return  updateTime ;
-    }
-
-
-    /**
-     * 添加数据库中的联系人 ;
-     * @param conacts
-     */
-    public void addRconact(HashMap<String ,RConact> conacts){;
-
-
-        String sql = "insert into "+DatabaseHelper.TABLE_NAME_RConact+"(username,alias,nikcname,type ,contactLabelIds) values(?,?,?,?,?)";
-        SQLiteStatement stat = db.compileStatement(sql);
-        db.beginTransaction();
-        Iterator iter = conacts.entrySet().iterator();
-        while (iter.hasNext()) {
-            Map.Entry entry = (Map.Entry) iter.next();
-            RConact con = (RConact) entry.getValue();
-            stat.bindString(1, con.getUsername());
-            stat.bindString(2, con.getAlias());
-            stat.bindString(3, con.getNickname());
-            stat.bindString(4, con.getType());
-            if(!TextUtils.isEmpty(con.getContactLabelIds()))
-            stat.bindString(5, con.getContactLabelIds());
-            stat.executeInsert();
-        }
-        db.setTransactionSuccessful();
-        db.endTransaction();
-        db.close();
-    }
-    /**
-     * 删除数据库中的联系人；
-     * @param rConacts
-     */
-    public void deleteConnacts(HashMap<String ,RConact> rConacts){
-        Iterator iterator =rConacts.entrySet().iterator();
-        while (iterator.hasNext()){
-            Map.Entry<String,RConact> entry = (Map.Entry<String, RConact>) iterator.next();
-            RConact rConact =entry.getValue() ;
-            db.delete(DatabaseHelper.TABLE_NAME_RConact," username = ?",new String []{rConact.getUsername()}) ;
-        }
-    }
-
-
-
-
-
-
     public void deleteTags (ArrayList<Tag> tags){
         for (Tag tag : tags) {
             db.delete(DatabaseHelper.TABLE_NAME_TAG,"name = ?" ,new String[]{tag.getName()});
         }
     }
 
+    /**
+     * 删除素材 ;
+     * @param matrial
+     */
     public void deleteMatrial(Matrial matrial){
         db.delete(DatabaseHelper.TABLE_NAME_MATARIAL_COLLECT,"material_id = ?" ,new String[]{matrial.getId()});
     }
 
+    /**
+     * 获得指定时间的收藏素材 ;
+     * @param date
+     * @return
+     */
     public List<Matrial> queryCollectMatrials(String date){
 
         ArrayList<Matrial> matrials =new ArrayList<>() ;
@@ -238,7 +175,6 @@ public class DbManager {
                 null);
         while (c.moveToNext())
         {
-            Log.i("szhua","cc");
             Matrial matrial =null;
             String json =c.getString(c.getColumnIndex("json")) ;
             try {
@@ -254,6 +190,10 @@ public class DbManager {
         return  matrials ;
     }
 
+    /**
+     * 获得收藏的素材;
+     * @return
+     */
     public List<Matrial> queryCollectMatrials(){
         ArrayList<Matrial> matrials =new ArrayList<>() ;
         Cursor c = db.rawQuery("SELECT * FROM " + DatabaseHelper.TABLE_NAME_MATARIAL_COLLECT  ,
@@ -277,6 +217,11 @@ public class DbManager {
         return  matrials ;
     }
 
+    /**
+     * 查询时候有当前材料的收藏;
+     * @param id
+     * @return
+     */
     public boolean checkIsCollect(String id){
         Cursor c = db.rawQuery("SELECT * FROM " + DatabaseHelper.TABLE_NAME_MATARIAL_COLLECT +" where material_id = "+ id,
                 null);
@@ -301,20 +246,10 @@ public class DbManager {
         return  false ;
     }
 
-    /**
-     * delete old person
-     *
-     * @param person
+    /*
+     获得数据库中的tag ;
      */
-    public void deleteOldPerson(Users person)
-    {
-        db.delete(DatabaseHelper.TABLE_NAME_User, "uin == ?",
-                new String[] { String.valueOf(person.getUin()) });
-    }
-
-
     public List<Tag> queryTag(){
-
         ArrayList<Tag> tags =new ArrayList<Tag>() ;
         Cursor c = queryTheCursor(DatabaseHelper.TABLE_NAME_TAG);
         while (c.moveToNext())
@@ -332,36 +267,7 @@ public class DbManager {
 
 
     /**
-     * 本地数据库获得数据 ;
-     * @return
-     */
-    public HashMap<String ,RConact> quryForRconacts(){
-         HashMap<String,RConact> rConacts =new HashMap<String,RConact>();
-        Cursor c = queryTheCursor(DatabaseHelper.TABLE_NAME_RConact);
-        while (c.moveToNext())
-        {
-            RConact rConact = new RConact();
-            rConact.setUsername(c.getString(c.getColumnIndex("username")));
-            rConact.setType(c.getString(c.getColumnIndex("type")));
-            if(!TextUtils.isEmpty(c.getString(c.getColumnIndex("contactLabelIds")))){
-              rConact.setContactLabelIds(c.getString(c.getColumnIndex("contactLabelIds")));
-            }else{
-                rConact.setContactLabelIds("");
-            }
-            if(!TextUtils.isEmpty(c.getString(c.getColumnIndex("alias")))){
-                rConact.setAlias(c.getString(c.getColumnIndex("alias")));}
-            else{
-                rConact.setAlias(c.getString(c.getColumnIndex("username")));
-            }
-            rConact.setNickname(c.getString(c.getColumnIndex("nikcname")));
-            rConacts.put(rConact.getUsername(),rConact) ;
-        }
-        c.close();
-        return rConacts;
-    }
-    /**
-     * query all persons, return list
-     *
+     * 获取数据库中储存的用户 ;
      * @return List<Person>
      */
     public  List<Users> query()
@@ -384,8 +290,6 @@ public class DbManager {
     }
 
     /**
-     * query all persons, return cursor
-     *
      * @return Cursor
      */
     public Cursor queryTheCursor(String tableName)

@@ -13,6 +13,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import eu.chainfire.libsuperuser.Shell;
 
+/**
+ * root工具类 ；
+ */
 @SuppressWarnings("WeakerAccess")
 public class Root {
     private static final Root _instance = new Root();
@@ -22,10 +25,8 @@ public class Root {
     public interface IGotRootListener {
         void onGotRootResult(boolean hasRoot);
     }
-
     private Root() {
     }
-
     public static Root getInstance() {
         return _instance;
     }

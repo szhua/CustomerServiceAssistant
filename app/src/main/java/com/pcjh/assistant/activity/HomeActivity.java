@@ -8,6 +8,7 @@ import android.os.SystemClock;
 import android.support.v4.view.ViewPager;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.mengma.asynchttp.RequestCode;
 import com.pcjh.assistant.R;
@@ -20,6 +21,7 @@ import com.pcjh.assistant.entity.Tag;
 import com.pcjh.assistant.fragment.HomeFragment;
 import com.pcjh.assistant.util.SharedPrefsUtil;
 import com.pcjh.liabrary.tablayout.SlidingTabLayout;
+import com.pcjh.liabrary.utils.UiUtil;
 
 import java.util.ArrayList;
 
@@ -83,6 +85,14 @@ public class HomeActivity extends BaseActivity {
         });
     }
 
+
+    @Override
+    public void onRequestError(int requestCode, String errorInfo, int erro_code) {
+        if(requestCode==RequestCode.CODE_0){
+            Toast.makeText(this,"此微信号未被授权",Toast.LENGTH_SHORT).show();
+        }
+    }
+
     @Override
     public void onRequestSuccess(int requestCode) {
         super.onRequestSuccess(requestCode);
@@ -139,7 +149,6 @@ public class HomeActivity extends BaseActivity {
                 homeFragments.add(HomeFragment.getInstance(tag.getName(),tag.getType()));
                 mTitles.add(tag.getName());
             }
-
             mAdapter = new HomePagerAdapter(getSupportFragmentManager());
             mAdapter.setmTitles(mTitles);
             mAdapter.setHomeFragments(homeFragments);

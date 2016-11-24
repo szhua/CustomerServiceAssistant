@@ -12,9 +12,10 @@ import com.mengma.asynchttp.JsonUtil;
 import com.mengma.asynchttp.RequestCode;
 import com.mengma.asynchttp.interf.INetResult;
 import com.pcjh.assistant.base.Constant;
+import com.pcjh.assistant.entity.ContactForJsonBase;
 import com.pcjh.assistant.entity.RConact;
-import com.pcjh.assistant.entity.Test;
-import com.pcjh.assistant.entity.TestBase;
+import com.pcjh.assistant.util.EncryptUtil;
+
 
 import org.w3c.dom.Text;
 
@@ -32,21 +33,25 @@ public class AppendFansDao extends IDao {
         super(context, iNetResult);
     }
 
-    public void apppendFans(String wx , String token , ArrayList<TestBase> tests){
+    public void apppendFans(String wx , String token , ArrayList<ContactForJsonBase> contactForJsonBases){
         RequestParams params =new RequestParams();
         String json ="" ;
         try {
-            json = JsonUtil.pojo2json(tests);
+            json = JsonUtil.pojo2json(contactForJsonBases);
+            Log.i("jsonSize","jsonOriFans"+json.length()) ;
+            json = EncryptUtil.encryptGZIP(json) ;
+            Log.i("jsonSize","jsonZipFans"+json.length()) ;
         } catch (IOException e) {
             e.printStackTrace();
         }
+        Log.i("szhua",json) ;
         params.add("wx" ,wx) ;
         params.add("token",token);
         params.put("fans_wx_tags",json);
         postRequest(Constant.BASE_URL+Constant.APPEND_FANS,params, RequestCode.APPENDFANS);
     }
 
-    public void changeFans(String wx , String token , ArrayList<TestBase> tests){
+    public void changeFans(String wx , String token , ArrayList<ContactForJsonBase> tests){
         RequestParams params =new RequestParams();
         String json ="" ;
         try {

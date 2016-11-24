@@ -3,9 +3,7 @@ package com.pcjh.assistant.activity;
 import android.app.DatePickerDialog;
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
-import android.util.Log;
 import android.view.View;
-import android.widget.CalendarView;
 import android.widget.DatePicker;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -14,8 +12,6 @@ import android.widget.TextView;
 import com.pcjh.assistant.R;
 import com.pcjh.assistant.base.BaseActivity;
 import com.pcjh.assistant.fragment.CollectFragment;
-import com.pcjh.assistant.interfer.DateChangedListener;
-import com.pcjh.liabrary.utils.UiUtil;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;

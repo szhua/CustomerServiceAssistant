@@ -1,5 +1,6 @@
 package com.pcjh.assistant.adapter;
 
+import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -19,6 +20,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.mengma.asynchttp.RequestCode;
+import com.mengma.asynchttp.dialog.ProgressHUD;
 import com.mengma.asynchttp.interf.INetResult;
 import com.pcjh.assistant.R;
 import com.pcjh.assistant.activity.CheckPhotoActivity;
@@ -67,6 +69,32 @@ public class HomeListAdapter extends RecyclerView.Adapter implements INetResult 
     private RemoveMaterialFavoriteCountDao removeMaterialFavoriteCountDao ;
     private AddMaterialRepostCountDao addMaterialRepostCountDao ;
     DbManager dbManager ;
+    private ProgressHUD  mProgressHUD;
+
+    /**
+     * 显示加载进度条
+     * @param show
+     */
+    public void showProgress(boolean show) {
+        showProgressWithText(show, "加载中...");
+    }
+
+    /**
+     * 显示加载进度条
+     *
+     * @param show
+     * @param message
+     */
+    public void showProgressWithText(boolean show, String message) {
+        if (show) {
+            mProgressHUD = ProgressHUD.show(context, message, true, true, null);
+        } else {
+            if (mProgressHUD != null) {
+                mProgressHUD.dismiss();
+            }
+        }
+    }
+
 
 
     public void setMatrialArrayList(ArrayList<Matrial> matrialArrayList) {
@@ -106,6 +134,7 @@ public class HomeListAdapter extends RecyclerView.Adapter implements INetResult 
         homeListHolder.transformbt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                 showProgressWithText(true,"正在处理···");
                  IMAGE_NAME =0 ;
                  final ArrayList<File> files =new ArrayList<File>();
                  Observable.just(homeListHolder.nineGridView)
@@ -145,6 +174,7 @@ public class HomeListAdapter extends RecyclerView.Adapter implements INetResult 
                          }
                          intent.putExtra("Kdescription", homeListHolder.content.getText().toString());
                          context.startActivity(intent);
+                         showProgress(false);
                      }
                      @Override
                      public void onError(Throwable e) {
@@ -278,7 +308,6 @@ public class HomeListAdapter extends RecyclerView.Adapter implements INetResult 
                         .centerCrop()
                         .into(imageView);
             }
-
             @Override
             protected ImageView generateImageView(Context context) {
                 return super.generateImageView(context);

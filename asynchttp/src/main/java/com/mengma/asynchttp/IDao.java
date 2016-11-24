@@ -59,7 +59,6 @@ public abstract class IDao {
         _getRequest(url, params, requestCode);
     }
 
-
     private void _getRequest(String url, Map<String, String> params, final int requestCode) {
 
         RequestParams ajaxParams = new RequestParams(params);
@@ -99,19 +98,6 @@ public abstract class IDao {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-//                try {
-//                    if (Arad.app.config.httpConfig != null) {
-//                        JsonNode node = Arad.app.config.httpConfig.handleResult(responseBody);
-//                        onRequestSuccess(node, requestCode);
-//                    }
-//                    mResult.onRequestSuccess(requestCode);
-//                } catch (AradException e) {
-//                    mResult.onRequestFaild(e.getError_code(), e.getMessage());
-//                } catch (JsonProcessingException e) {
-//                    e.printStackTrace();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
             }
 
             @Override
@@ -130,9 +116,9 @@ public abstract class IDao {
 
 
     /**
-     * POST 请求
+     * POST 请求 MainInUse===Post
      *
-     * @param requestCode 自定义这是第几个post请求，用于结果的区分
+     * @param requestCode
      */
     public void postRequest(String url, RequestParams params, final int requestCode) {
 
@@ -151,10 +137,6 @@ public abstract class IDao {
                     if (node.findValue("msg") != null) {
                         errorInfo = node.findValue("msg").asText();
                     }
-
-                    if (node.findValue("error_code") != null) {
-                        error_code = node.findValue("error_code").asInt();
-                    }
                     if (responseCode==0) {
                         onRequestSuccess(node, requestCode);
                         mResult.onRequestSuccess(requestCode);
@@ -163,11 +145,14 @@ public abstract class IDao {
                     }
                 } catch (JsonProcessingException e1) {
                     e1.printStackTrace();
+                    //添加 parse==》erro也是请求的erro ;
+                    mResult.onRequestFaild(requestCode,e1.toString(),e1.toString());
                 } catch (IOException e) {
                     e.printStackTrace();
+                   //添加 parse==》erro也是请求的erro ;
+                    mResult.onRequestFaild(requestCode,e.toString(),e.toString());
                 }
             }
-
             @Override
             public void onFailure(int statusCode, Header[] headers, String responseBody, Throwable error) {
                 Log.d(TAG, "statusCode:" + statusCode + " Body:" + responseBody);

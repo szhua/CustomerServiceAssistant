@@ -2,11 +2,15 @@ package com.pcjh.assistant.entity;
 
 import java.util.ArrayList;
 
-
 /**
- * Created by szhua on 2016/11/18.
+ * Created by szhua on 2016/11/24.
+ *
+ *
+ * 转换为json的联系人实体类 ；实现类 ；
+ *
  */
-public class Test extends TestBase {
+public class ContactForJson  extends ContactForJsonBase{
+
     ArrayList<String> tagname ;
     public ArrayList<String> getTagname() {
         return tagname;
@@ -14,4 +18,5 @@ public class Test extends TestBase {
     public void setTagname(ArrayList<String> tagname) {
         this.tagname = tagname;
     }
+
 }

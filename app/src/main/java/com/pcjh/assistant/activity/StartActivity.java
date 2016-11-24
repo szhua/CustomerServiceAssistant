@@ -9,6 +9,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.mengma.asynchttp.JsonUtil;
 import com.mengma.asynchttp.RequestCode;
 import com.mengma.asynchttp.interf.INetResult;
 import com.pcjh.assistant.R;
@@ -16,7 +17,10 @@ import com.pcjh.assistant.WorkService;
 import com.pcjh.assistant.base.AppHolder;
 import com.pcjh.assistant.base.BaseActivity;
 import com.pcjh.assistant.dao.InitDao;
+import com.pcjh.assistant.dao.TestgZipDao;
 import com.pcjh.assistant.db.DbManager;
+import com.pcjh.assistant.entity.ContactForJson;
+import com.pcjh.assistant.entity.Tag;
 import com.pcjh.assistant.entity.UserInfo;
 import com.pcjh.assistant.entity.Users;
 import com.pcjh.assistant.util.ChmodUtil;
@@ -33,7 +37,9 @@ import net.sqlcipher.database.SQLiteDatabaseHook;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Random;
 
 import butterknife.ButterKnife;
 import rx.Observable;
@@ -50,14 +56,6 @@ public class StartActivity extends BaseActivity implements INetResult{
     private String Imei;
     private String uin;
     private String password;
-    /**
-     * for Root ;
-     */
-    private Process process;
-    private DataOutputStream os;
-    private DataInputStream is;
-    private SharedPreferences  mPreferences;
-    private boolean isRoot =true;
     private DbManager dbManager;
 
 
@@ -69,20 +67,19 @@ public class StartActivity extends BaseActivity implements INetResult{
 
 
 
+
         dbManager =new DbManager(this) ;
         Root.getInstance().getRoot(new Root.IGotRootListener() {
             @Override
             public void onGotRootResult(boolean hasRoot) {
                 if (!hasRoot) {
                     UiUtil.showLongToast(StartActivity.this, "未获得root权限");
-                    initDao =new InitDao(StartActivity.this,StartActivity.this) ;
-                    initDao.get_token("shuweineng888");
-                    isRoot=false ;
                 }else{
                     Imei = ((TelephonyManager) getSystemService(TELEPHONY_SERVICE))
                             .getDeviceId();
                     uin = XmlPaser.getUidFromFile();
-                    if (TextUtils.isEmpty(uin)) {
+                    //若是从xml中获取的uin为0或者为空，当前没有登陆的微信号；
+                    if (TextUtils.isEmpty(uin)||uin.equals("0")) {
                         UiUtil.showLongToast(StartActivity.this, "请登录当前的微信号");
                     } else {
                         SharedPrefsUtil.putValue(StartActivity.this,"uin",uin);
@@ -99,6 +96,7 @@ public class StartActivity extends BaseActivity implements INetResult{
                                     public void onError(Throwable e) {
                                         showProgress(false);
                                         Log.i("leilei", e.toString());
+                                        Toast.makeText(StartActivity.this,"解析时出现错误",Toast.LENGTH_SHORT).show();
                                     }
                                     @Override
                                     public void onNext(UserInfo userInfo) {
@@ -107,12 +105,15 @@ public class StartActivity extends BaseActivity implements INetResult{
                                             userInfo.setWxNumber(userInfo.getWxId());
                                         }
                                         AppHolder.getInstance().setUser(userInfo);
+                                        /**
+                                         * 储存当前登录账户的微信号 ;
+                                         */
                                         SharedPrefsUtil.putValue(StartActivity.this,"wx",AppHolder.getInstance().getUser().getWxNumber());
                                         initDao =new InitDao(StartActivity.this,StartActivity.this);
                                         initDao.get_token(userInfo.getWxNumber());
                                     }
                                 });
-                }
+                    }
                 }}
 
         });
@@ -122,8 +123,6 @@ public class StartActivity extends BaseActivity implements INetResult{
     public void onRequestSuccess(int requestCode) {
         super.onRequestSuccess(requestCode);
         if(requestCode==RequestCode.INITSUCESS) {
-            if(isRoot){
-            Log.i("szhua", "resultsss" + initDao.getJson());
             String token = initDao.getToken();
             AppHolder.getInstance().setToken(token);
             Users users = AppHolder.getInstance().getUsers();
@@ -133,7 +132,6 @@ public class StartActivity extends BaseActivity implements INetResult{
             SharedPrefsUtil.putValue(StartActivity.this, "dbPath", users.getDbPath());
             SharedPrefsUtil.putValue(StartActivity.this, "token", token);
             SharedPrefsUtil.putValue(StartActivity.this, "wxid", AppHolder.getInstance().getUser().getWxId());
-
             new Thread(){
                 @Override
                 public void run() {
@@ -148,16 +146,6 @@ public class StartActivity extends BaseActivity implements INetResult{
                     }
                 }
             }.start();
-
-            }else{
-                Log.i("szhua", "result" + initDao.getJson());
-                String token = initDao.getToken();
-                AppHolder.getInstance().setToken(token);
-                SharedPrefsUtil.putValue(StartActivity.this, "token", token);
-                Intent intent = new Intent(StartActivity.this , HomeActivity.class);
-                startActivity(intent);
-                finish();
-            }
         }
     }
 
@@ -178,6 +166,12 @@ public class StartActivity extends BaseActivity implements INetResult{
     /**
      * @param uin
      * @return UserInfo
+     *                                                                                   ||
+     *                                                                             若是有
+     * 1。从数据库拿出已经存在的用户，若是有用户不存在==》判断是否有当前的账户==》
+     *                                                                            若是没有
+     *                                                                                   ||
+     *                                     1。从数据库拿出已经存在的用户，若是没有户存在==》
      */
     public Observable<UserInfo> getUserInfo(final String uin) {
         Observable<UserInfo> userInfoOb = null;
@@ -201,7 +195,7 @@ public class StartActivity extends BaseActivity implements INetResult{
                     .doOnNext(new Action1<ArrayList<Users>>() {
                         @Override
                         public void call(ArrayList<Users> userses) {
-                            if (userses == null || userses.size() == 0) {
+                            if (userses == null || userses.isEmpty()) {
                                 Log.i("szhua","数据库暂无微信号");
                             }
                         }
@@ -220,8 +214,7 @@ public class StartActivity extends BaseActivity implements INetResult{
                             if (users != null) {
                                 AppHolder.getInstance().setUsers(users);;
                                 AppHolder.getInstance().getUser().setPassword(users.getPassword());
-                                Log.i("szhua",AppHolder.getInstance().getUsers().getDbPath());
-                             Log.i("szhua", "从数据库获得用户成功！");
+                                 Log.i("szhua", "从数据库获得用户成功！");
                             } else {
                                 Log.i("szhua", "从数据库获取用户失败！");
                             }
@@ -310,21 +303,23 @@ public class StartActivity extends BaseActivity implements INetResult{
                 }
                 c.close();
                 db.close();
-                SQLiteDatabase db1 = SQLiteDatabase.openDatabase(dbFile.getAbsolutePath(), pass, null, SQLiteDatabase.OPEN_READWRITE, hook);
-                Cursor c1 = db1.query("userinfo2", null, null, null, null, null, null);
-                while (c1.moveToNext()) {
-                    String id = c1.getString(c.getColumnIndex("id"));
-                    String value = c1.getString(c.getColumnIndex("value"));
-                    if (id.equals("USERINFO_SELFINFO_SMALLIMGURL_STRING")) {
-                        userinfo.setHeaderIcon(value);
-                    }
-                }
-                c1.close();
-                db1.close();
+
+                /**
+                 * 若不是从旧的数据库获取数据的话;
+                 */
                 if (!isFromOld) {
                     Users users = new Users();
+                    /**
+                     * 储存用户的微信号的路径 ；
+                     */
                     users.setDbPath(dbFile.getAbsolutePath());
+                    /**
+                     * 储存password
+                     */
                     users.setPassword(pass);
+                    /**
+                     * 储存uin；
+                     */
                     users.setUin(uin);
                     Log.i("users", users.toString());
                     ArrayList<Users> data = new ArrayList<>();
@@ -343,15 +338,21 @@ public class StartActivity extends BaseActivity implements INetResult{
 
 
 
-    //读取微信中的信息 ；
+    //从微信文件中读取用户的信息 ；
     public UserInfo readWeChatDatabase() {
-        getRoot();
+         getRoot();
         //此处用于读取 当前微信号的uin
         SQLiteDatabase.loadLibs(this);
         File testFile = new File("/data/data/com.tencent.mm/MicroMsg/");
+        /**
+         * 若是不能够读取的话，设置他为可读取 ;
+         */
         if (!testFile.canRead()) {
             ChmodUtil.setFileCanRead(testFile);
         }
+        /**
+         * 可能是当前微信的EnMicrloMsg的文件 ；
+         */
         ArrayList<File> dbDatas = new ArrayList<File>();
         if (testFile.isDirectory()) {
             for (int i = 0; i < testFile.listFiles().length; i++) {
@@ -375,7 +376,7 @@ public class StartActivity extends BaseActivity implements INetResult{
             }
         }
         UserInfo userInfo = null;
-        if (dbDatas.size() == 0) {
+        if (dbDatas.isEmpty()) {
             return null;
         } else {
             for (int i = 0; i < dbDatas.size(); i++) {
@@ -408,8 +409,15 @@ public class StartActivity extends BaseActivity implements INetResult{
         return null;
     }
 
+
     // get the root privileges
     public void getRoot(){
+        /**
+         * for Root ;
+         */
+         Process process =null;
+         DataOutputStream os =null;
+         DataInputStream is =null;
         try {
             process = Runtime.getRuntime().exec("/system/xbin/su"); /*这里可能需要修改su
 的源代码 （注掉  if (myuid != AID_ROOT && myuid != AID_SHELL) {*/

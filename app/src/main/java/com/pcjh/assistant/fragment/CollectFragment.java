@@ -8,14 +8,9 @@ import android.util.Log;
 import com.pcjh.assistant.adapter.HomeListAdapter;
 import com.pcjh.assistant.base.BaseLoadMoreListFragment;
 import com.pcjh.assistant.db.DbManager;
-import com.pcjh.assistant.entity.HomeEntity;
 import com.pcjh.assistant.entity.Matrial;
-import com.pcjh.assistant.interfer.DateChangedListener;
-import com.pcjh.liabrary.utils.UiUtil;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Created by 单志华 on 2016/10/29.

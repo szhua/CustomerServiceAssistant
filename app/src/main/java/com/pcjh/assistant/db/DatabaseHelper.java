@@ -6,13 +6,13 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 /**
  * Created by szhua on 2016/10/18.
+ * android 本地数据库的存储；
  */
 public class DatabaseHelper  extends SQLiteOpenHelper{
 
     public static final String DB_NAME = "User.db"; //数据库名称
     private static final int version = 1; //数据库版本
     public static final String TABLE_NAME_User ="user" ;
-    public static final String TABLE_NAME_RConact ="rconact" ;
     public static final String TABLE_NAME_TAG ="tag";
     public static final String TABLE_NAME_MATARIAL_COLLECT = "collectmatrial" ;
     public static final String TABLE_NAME_UPDATE_TIME ="uoload_time" ;
@@ -35,14 +35,6 @@ public class DatabaseHelper  extends SQLiteOpenHelper{
                 "uin varchar(40) not null);";
         db.execSQL(sql);
 
-        String sql2 = "create table rconact( username  default  ''  PRIMARY KEY   , "  +
-                "alias varchar(30) null ," +
-                "nikcname varchar(20) not null ," +
-                "type varchar(20) not null ," +
-                "contactLabelIds text null ) ;";
-        db.execSQL(sql2);
-
-
         String sql5 ="create table tag ( id integer PRIMARY KEY  autoincrement , " +
                 "type varchar(10) not null ," +
                 "name varchar (60) not null  " +
@@ -62,11 +54,9 @@ public class DatabaseHelper  extends SQLiteOpenHelper{
                 "uin varchar(10) not null " +
                 ") ;" ;
         db.execSQL(sql7);
-
     }
-
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
+        // TODO: 2016/11/24  
     }
 }

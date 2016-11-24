@@ -21,8 +21,6 @@ public abstract class BaseLoadMoreListFragment extends BaseFragment implements S
     protected RecyclerView recyclerView;
     private int lastVisiblePostion;
     private LinearLayoutManager layoutManager;
-    protected static final int REFRESH_COMPLETE = 0;
-    protected static final int LOAD_COMPLETE = 1;
     protected SwipeRefreshLayout swipeRefreshLayout ;
     /**
      * 获取子类的Adapter
@@ -76,15 +74,6 @@ public abstract class BaseLoadMoreListFragment extends BaseFragment implements S
         //设置进度动画的颜色
         swipeRefreshLayout.setColorSchemeResources(android.R.color.holo_blue_bright, android.R.color.holo_green_light,
                 android.R.color.holo_orange_light, android.R.color.holo_red_light); //没转一圈换一个颜色
-        swipeRefreshLayout.setProgressBackgroundColorSchemeResource(android.R.color.white); //圈的背景色
-       //swipeRefreshLayout.setDistanceToTriggerSync(300);
-   // swipeRefreshLayout.setProgressViewOffset(true,0,1000);
-       //  swipeRefreshLayout.offsetTopAndBottom(500);
-        // 这句话是为了，第一次进入页面的时候显示加载进度条
-//        swipeRefreshLayout.setProgressViewOffset(false, 0, (int) TypedValue
-//                .applyDimension(TypedValue.COMPLEX_UNIT_DIP, 24, getResources()
-//                        .getDisplayMetrics()));
-        // 设置位置，设置后swipeRefreshLayout.setRefreshing(true);才会显示
         swipeRefreshLayout.setProgressViewOffset(false, 0, (int) TypedValue
                 .applyDimension(TypedValue.COMPLEX_UNIT_DIP, 24, getResources()  //applyDimension 该处意思是获取24dip
                         .getDisplayMetrics()));
@@ -126,7 +115,6 @@ public abstract class BaseLoadMoreListFragment extends BaseFragment implements S
         String wx = SharedPrefsUtil.getValue(getContext(),"wx","") ;
         return   wx  ;
     }
-
     public String getToken(){
         String token = SharedPrefsUtil.getValue(getContext(),"token","") ;
         return   token  ;
