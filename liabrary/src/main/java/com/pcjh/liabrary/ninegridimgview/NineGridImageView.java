@@ -128,13 +128,7 @@ public class NineGridImageView<T> extends ViewGroup {
 
                 childrenView.layout(left, top, right, bottom);
             }
-
-
         }
-
-
-
-
     }
 
     /**

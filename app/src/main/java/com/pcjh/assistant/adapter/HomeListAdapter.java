@@ -159,7 +159,6 @@ public class HomeListAdapter extends RecyclerView.Adapter implements INetResult 
                          ComponentName comp = new ComponentName("com.tencent.mm",
                                  "com.tencent.mm.ui.tools.ShareToTimeLineUI");
                          intent.setComponent(comp);
-
                          if(files==null||files.size()==0){
                              intent.setAction(Intent.ACTION_SEND) ;
                              intent.setType("text/plain") ;
@@ -236,7 +235,7 @@ public class HomeListAdapter extends RecyclerView.Adapter implements INetResult 
         int postion  ;
         switch (requestCode){
             case RequestCode.CODE_5:
-               postion =addMaterialFavoriteCountDao.getPostion() ;
+                postion =addMaterialFavoriteCountDao.getPostion() ;
                 matrialArrayList.get(postion).setFavorite_count(""+addMaterialFavoriteCountDao.getFavorite_count());
                 notifyDataSetChanged();
                 break;
@@ -301,9 +300,10 @@ public class HomeListAdapter extends RecyclerView.Adapter implements INetResult 
             protected void onDisplayImage(Context context, ImageView imageView, Image s) {
 
                 String path ="http://"+s.getServer()+s.getPath() ;
+              //  Log.i("szhuapath",path) ;
                 Picasso.with(context)
                         .load(path)
-                        .placeholder(context.getResources().getColor(R.color.text_color_light))
+                        .placeholder(R.drawable.header_icon)
                         .resize(300,300)
                         .centerCrop()
                         .into(imageView);
@@ -314,9 +314,6 @@ public class HomeListAdapter extends RecyclerView.Adapter implements INetResult 
             }
             @Override
             protected void onItemImageClick(Context context, int index, List<Image> list) {
-//                Toast.makeText(context, "image position is " + index, Toast.LENGTH_SHORT).show();
-//                Intent intent =new Intent(context, CheckPhotoActivity.class) ;
-//                context.startActivity(intent);
             }
         };
         public void bind(final Matrial matrial , final Context context) {
@@ -325,7 +322,7 @@ public class HomeListAdapter extends RecyclerView.Adapter implements INetResult 
             content.setText(matrial.getContent());
             if(!TextUtils.isEmpty(matrial.getFavorite_count())){
                collectNum.setText( matrial.getFavorite_count());}else{
-                collectNum.setText("0");
+               collectNum.setText("0");
             }
               tranformNum.setText(matrial.getRepost_count());
          try{

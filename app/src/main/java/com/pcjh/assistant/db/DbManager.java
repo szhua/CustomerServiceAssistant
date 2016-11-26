@@ -4,25 +4,17 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteStatement;
-import android.text.TextUtils;
 import android.util.Log;
 
 
 import com.mengma.asynchttp.JsonUtil;
-import com.pcjh.assistant.entity.Label;
-import com.pcjh.assistant.entity.LabelConact;
 import com.pcjh.assistant.entity.Matrial;
-import com.pcjh.assistant.entity.RConact;
 import com.pcjh.assistant.entity.Tag;
 import com.pcjh.assistant.entity.Users;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by szhua on 2016/10/18.
@@ -91,27 +83,20 @@ public class DbManager {
 
 
 
+
     /**
-     * add persons
+     *向数据库中添加微信用户信息 ；
+     * @param user
      *
-     * @param userses
      */
-    public void add(List<Users> userses)
+    public void addWxUserInfoToDb(Users user)
     {
-      //  Log.i("users",userses.toString()) ;
-        // 采用事务处理，确保数据完整性
         db.beginTransaction(); // 开始事务
         try
         {
-            for (Users user : userses)
-            {
                 db.execSQL("INSERT INTO " + DatabaseHelper.TABLE_NAME_User +"('nickName','face','dbPath','password','uin')"
                         + " VALUES(?, ?, ?, ?, ? )", new Object[]{user.getNickName(),
                         user.getFace(), user.getDbPath(),user.getPassword(),user.getUin() });
-                // 带两个参数的execSQL()方法，采用占位符参数？，把参数值放在后面，顺序对应
-                // 一个参数的execSQL()方法中，用户输入特殊字符时需要转义
-                // 使用占位符有效区分了这种情况
-            }
             db.setTransactionSuccessful(); // 设置事务成功完成
         }
         finally
@@ -119,6 +104,10 @@ public class DbManager {
             db.endTransaction(); // 结束事务
         }
     }
+
+
+
+
 
     /**
      * update person's age

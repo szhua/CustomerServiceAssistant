@@ -28,7 +28,6 @@ public class AppHolder {
     }
 
     public String getToken(){
-
         return token;
     }
     public Users getUsers() {

@@ -1,10 +1,7 @@
 package com.pcjh.assistant.util;
 
-import android.util.Log;
 import android.util.Xml;
-
 import org.xmlpull.v1.XmlPullParser;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -39,33 +36,31 @@ public class XmlPaser {
                     break;
             }
             event = pullParser.next();
-            Log.i("xmlparser","name"+pullParser.getName()) ;
         }
         return value;
     }
+
+    /**
+     * 获得xml文件 ;
+     * @return
+     */
     public static String   getUidFromFile(){
         //tod  shared_prefs 的权限 ；
         String path ="/data/data/com.tencent.mm/shared_prefs/system_config_prefs.xml" ;
         File xmlFile =new File(path);
         ChmodUtil.setFileCanRead(xmlFile);
         String   wx =null ;
-        Log.i("wxUin","fs"+xmlFile.canRead()) ;
         try {
             if(xmlFile.exists()&&xmlFile.canRead()){
                 InputStream inputStream =new FileInputStream(xmlFile) ;
                 wx =XmlPaser.getUin(inputStream);
-              //  ChmodUtil.setFileCanNotRead(xmlFile);
                 return  wx ;
             }else{
-                Log.i("wxUin","notexists") ;
             }
-            //  Log.i("wxUin","uin:"+uin) ;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            Log.i("wxUin","FileNotFoundException");
         } catch (Exception e) {
             e.printStackTrace();
-            Log.i("wxUin","Exception");
         }
         return  wx ;
     }

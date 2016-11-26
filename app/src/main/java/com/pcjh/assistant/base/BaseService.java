@@ -18,7 +18,7 @@ import com.pcjh.assistant.entity.RConact;
 import com.pcjh.assistant.entity.UserInfo;
 import com.pcjh.assistant.entity.Users;
 import com.pcjh.assistant.entity.WMessage;
-import com.pcjh.assistant.util.ChmodUtil;
+import com.pcjh.assistant.util.InitializeWx;
 import com.pcjh.assistant.util.Md5;
 import com.pcjh.assistant.util.SharedPrefsUtil;
 import com.pcjh.assistant.util.XmlPaser;
@@ -27,18 +27,13 @@ import net.sqlcipher.Cursor;
 import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteDatabaseHook;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 import rx.Observable;
 import rx.Subscriber;
-import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 
@@ -46,10 +41,14 @@ import rx.schedulers.Schedulers;
  * Created by szhua on 2016/11/9.
  */
 public  class BaseService extends Service implements INetResult {
-    private InitDao  initDao;
-    private String  Imei;
-    private String   uin;
-    private String  password;
+
+    private InitDao  initDao =new InitDao(this,this);
+
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+    }
 
     @Nullable
     @Override
@@ -62,7 +61,12 @@ public  class BaseService extends Service implements INetResult {
         super.onDestroy();
 
     }
-    //==================================================================================================
+
+
+
+
+
+    //==================================================================================================从微信数据库中拿信息 ；
 
     /**
      * 初始化数据库 ；进行解密 ；
@@ -83,20 +87,7 @@ public  class BaseService extends Service implements INetResult {
         return db;
     }
 
-    /**
-     * 从xml文件中获取uin ;
-     * @return
-     */
-    public Observable<String> getUin(){
 
-        Observable<String> observable =Observable.just("").map(new Func1<String, String>() {
-            @Override
-            public String call(String s) {
-                return XmlPaser.getUidFromFile();
-            }
-        }) ;
-        return  observable ;
-    }
 
     /**
      * 从微信中获取信息（指定条目的数据）;
@@ -143,6 +134,7 @@ public  class BaseService extends Service implements INetResult {
      */
     public HashMap<String,Label> _getLabels(Users users) {
         SQLiteDatabase db =initPSWdb(users) ;
+        Log.i("szhua",users.getPassword()) ;
         Cursor c = db.query("ContactLabel", new String[]{"labelID","labelName","createTime"}, null, null, null, null, null);
         HashMap<String,Label> hashMap =new HashMap<String ,Label>() ;
        try{
@@ -201,43 +193,119 @@ public  class BaseService extends Service implements INetResult {
         return RConacts;
     }
 
-
+//=================================================================================================================================================从微信数据库中拿信息 ；
 
     /**
      * 重新获得用户的信息；
      */
     public void resetUsesrs(){
-        Imei = ((TelephonyManager) getSystemService(TELEPHONY_SERVICE))
-                .getDeviceId();
-        uin = XmlPaser.getUidFromFile();
-        SharedPrefsUtil.putValue(getBaseContext(),"uin",uin);
-        getUserInfo()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<UserInfo>() {
-                    @Override
-                    public void onCompleted() {
-
-                    }
-                    @Override
-                    public void onError(Throwable e) {
-                        Log.i("leilei", e.toString());
-                    }
-                    @Override
-                    public void onNext(UserInfo userInfo) {
-                        Log.i("leilei", "nicknameRe" +userInfo.getNickName());
-                        if(TextUtils.isEmpty(userInfo.getWxNumber())){
-                            userInfo.setWxNumber(userInfo.getWxId());
-                        }
-                        AppHolder.getInstance().setUser(userInfo);
-                        SharedPrefsUtil.putValue(getBaseContext(),"wx",AppHolder.getInstance().getUser().getWxNumber());
-                        initDao =new InitDao(getBaseContext(),BaseService.this);
-                        initDao.get_token(userInfo.getWxNumber());
-                    }
-                });
+        getUserInfo();
     }
 
 
+    /**
+     * 从微信获取用户信息；
+     */
+    public void getUserInfo(){
+        String Imei = ((TelephonyManager) getSystemService(TELEPHONY_SERVICE))
+                .getDeviceId();
+        String uin = XmlPaser.getUidFromFile();
+        //若是从xml中获取的uin为0或者为空，当前没有登陆的微信号；
+        if (!TextUtils.isEmpty(uin)&&!uin.equals("0")) {
+            SharedPrefsUtil.putValue(getBaseContext(),"uin",uin);
+            SharedPrefsUtil.putValue(getBaseContext(),"Imei",Imei);
+            getUserInfo(uin,Imei);
+        }
+    }
+
+
+    /**
+     * @param uin
+     * @return UserInfo
+     *                                                                                   ||
+     *                                                                             若是有
+     * 1。从数据库拿出已经存在的用户，若是有用户不存在==》判断是否有当前的账户==》
+     *                                                                            若是没有
+     *                                                                                   ||
+     *                                     1。从数据库拿出已经存在的用户，若是没有户存在==》
+     *
+     *
+     *  链式结构从数据库中获得信息；
+     */
+    public void getUserInfo(final String uin , final String Imei) {
+        final DbManager dbManager =new DbManager(getBaseContext()) ;
+        Observable<UserInfo> userInfoOb = null;
+            Observable.just(uin)
+                    .observeOn(Schedulers.io())
+                    .map(new Func1<String, ArrayList<Users>>() {
+                        @Override
+                        public ArrayList<Users> call(String s) {
+                            return (ArrayList<Users>) dbManager.query();
+                        }
+                    })
+                    .map(new Func1<ArrayList<Users>, Users>() {
+                        @Override
+                        public Users call(ArrayList<Users> userses) {
+                            return userses.isEmpty() ? null : InitializeWx.getInstance().checkUserExisted(userses, uin);
+                        }
+                    })
+                    .map(new Func1<Users, UserInfo>() {
+                        @Override
+                        public UserInfo call(Users users) {
+                            if (users != null) {
+                                Log.i("szhua", "从数据库获取用户成功！");
+                                return InitializeWx.getInstance().readDatabaseFromOldInfo(users,getBaseContext(), uin, dbManager);
+                            } else {
+                                /**
+                                 * 获得解密数据库(EnMicroMsg.db)的密码 ;
+                                 */
+                                String password = Md5.getMd5Value(Imei + uin).substring(0, 7);
+
+                                //简单的进行打印（便于跟踪信息）；
+                                Log.i("szhua", "psw" + password);
+                                Log.i("szhua","uin"+uin) ;
+
+                                AppHolder.getInstance().getUser().setPassword(password);
+                                return InitializeWx.getInstance().readWeChatDatabase(password, getBaseContext(), uin, dbManager);
+
+                            }
+                        }
+                    })
+                    .observeOn(AndroidSchedulers.mainThread())
+                    // TODO: 2016/11/26  checkTheMethodisRight：
+                    .subscribe(new Subscriber<UserInfo>() {
+                        @Override
+                        public void onCompleted() {
+                          Log.i("szhua","切换账号操做完成") ;
+                          dbManager.closeDB();
+                        }
+                        @Override
+                        public void onError(Throwable e) {
+                            Log.i("leilei", "this is why you can't get userInfo :"+e.toString());
+                            Log.i("szhua","解析时出现错误") ;
+                            dbManager.closeDB();
+                        }
+                        @Override
+                        public void onNext(UserInfo userInfo) {
+                            Log.i("leilei", "NickNameReGet:" + userInfo.getNickName());
+                            if (TextUtils.isEmpty(userInfo.getWxNumber())) {
+                                userInfo.setWxNumber(userInfo.getWxId());
+                            }
+                            AppHolder.getInstance().setUser(userInfo);
+                            /**
+                             * 储存当前登录账户的微信号 ;
+                             */
+                            SharedPrefsUtil.putValue(getBaseContext(), "wx", AppHolder.getInstance().getUser().getWxNumber());
+                            initDao.get_token(userInfo.getWxNumber());
+                        }
+                    });
+       }
+
+
+    /**
+     *
+     * @param requestCode 网络请求顺序号，第一个请求，NetRequestOrderNum=0,处理第一条请求的结果。如果等于1,
+     */
     @Override
     public void onRequestSuccess(int requestCode) {
         if(requestCode== RequestCode.INITSUCESS){
@@ -255,6 +323,7 @@ public  class BaseService extends Service implements INetResult {
             SharedPrefsUtil.putValue(getBaseContext(), "token", token);
             SharedPrefsUtil.putValue(getBaseContext(), "wxid", AppHolder.getInstance().getUser().getWxId());
             SharedPrefsUtil.putValue(getBaseContext(),"wx",AppHolder.getInstance().getUser().getWxNumber());
+
             /**
              * 重新启动服务 ；
              */
@@ -275,242 +344,12 @@ public  class BaseService extends Service implements INetResult {
 
     @Override
     public void onRequestFaild(int requestCode, String errorNo, String errorMessage) {
-
     }
+
+
     @Override
     public void onNoConnect() {
     }
-    /**
-     * @return UserInfo
-     */
-    public Observable<UserInfo> getUserInfo() {
-        Observable<UserInfo> userInfoOb = null;
-        if (!TextUtils.isEmpty(this.uin) && Integer.parseInt(this.uin) != 0) {
-            userInfoOb = Observable.just(this.uin)
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .doOnNext(new Action1<String>() {
-                        @Override
-                        public void call(String s){
-                        }
-                    })
-                    .observeOn(Schedulers.io())
-                    .map(new Func1<String, ArrayList<Users>>() {
-                        @Override
-                        public ArrayList<Users> call(String s) {
-                            DbManager dbManager = new DbManager(getBaseContext());
-                            return (ArrayList<Users>) dbManager.query();
-                        }
-                    })
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .doOnNext(new Action1<ArrayList<Users>>() {
-                        @Override
-                        public void call(ArrayList<Users> userses) {
-                            if (userses == null || userses.size() == 0) {
-                                Log.i("szhua","数据暂无此微信号！");
-                            }
-                        }
-                    })
-                    .observeOn(Schedulers.io())
-                    .map(new Func1<ArrayList<Users>, Users>() {
-                        @Override
-                        public Users call(ArrayList<Users> userses) {
-                            return userses == null ? null : checkUserExisted(userses);
-                        }
-                    })
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .doOnNext(new Action1<Users>() {
-                        @Override
-                        public void call(Users users) {
-                            if (users != null) {
-                                AppHolder.getInstance().setUsers(users);;
-                                AppHolder.getInstance().getUser().setPassword(users.getPassword());
-                            }
-                        }
-                    })
-                    .observeOn(Schedulers.io())
-                    .map(new Func1<Users, UserInfo>() {
-                        @Override
-                        public UserInfo call(Users users) {
-                            if (users != null) {
-                                return readDatabaseFromOldInfo(users);
-                            } else {
-                                String result = Imei + BaseService.this.uin;
-                                String md5 = Md5.getMd5Value(result);
-                                password = md5.substring(0, 7);
-                                Log.i("szhua","psw"+password);
-                                AppHolder.getInstance().getUser().setPassword(password);
-                                return readWeChatDatabase();
-                            }
-                        }
-                    });
-            return userInfoOb;
-        } else {
-            return Observable.error(new Throwable("erro "));
-        }}
 
-
-    /**
-     * 检验当前微信账号的数据是否存在；
-     *
-     * @param data
-     * @return
-     */
-    public Users checkUserExisted(ArrayList<Users> data) {
-        if (data != null && data.size() > 0) {
-            for (int i = 0; i < data.size(); i++) {
-                if (data.get(i).getUin().equals(uin)) {
-                    Users users = data.get(i);
-                    return users;
-                }
-            }
-        }
-        return null;
-    }
-
-
-
-    //已知密码和文件路径的情况下；
-    public UserInfo readDatabaseFromOldInfo(Users users) {
-        SQLiteDatabase.loadLibs(this);
-        File testFile = new File("/data/data/com.tencent.mm/MicroMsg/");
-        UserInfo userinfo = null;
-        if (!testFile.canRead()) {
-            ChmodUtil.setFileCanRead(testFile);
-        }
-        if (users != null) {
-            File dbFile = new File(users.getDbPath());
-            if (!dbFile.canRead()) {
-                ChmodUtil.setFileCanRead(dbFile);
-            }
-            userinfo = getDataWithSqlcipher(dbFile, users.getPassword(), true);
-        }
-        return userinfo;
-    }
-
-    /**
-     * 从enMicriMsg.db这个数据库中获得用户的一些信息 ；
-     * @param dbFile
-     * @param pass
-     * @param isFromOld
-     * @return
-     */
-    public UserInfo getDataWithSqlcipher(File dbFile, String pass, boolean isFromOld) {
-        //获得最终的db文件并进行读取其中的数据；
-        UserInfo userInfo = null;
-        if (dbFile != null && dbFile.getName().contains("db")) {
-            SQLiteDatabaseHook hook = new SQLiteDatabaseHook() {
-                public void preKey(SQLiteDatabase database) {
-                }
-                public void postKey(SQLiteDatabase database) {
-                    //执行这样的sql语句进行对数据库的解密；
-                    database.rawExecSQL("PRAGMA cipher_migrate;");
-                }
-            };
-            try {
-                //以这样的方式去读取数据库中的文件，确保文件的完整性：
-                //@WeChat ====》微信客户端户对本地的数据库进行判断，发现文件被破坏的话就会执行重新登录操作，并且会对文件中的数据进行清除：
-                //这样的体验对用户来说肯定是不行的。 故放弃官方的打开方式 使用下面的方法。
-                SQLiteDatabase db = SQLiteDatabase.openDatabase(dbFile.getAbsolutePath(), pass, null, SQLiteDatabase.OPEN_READWRITE, hook);
-                Cursor c = db.query("userinfo", null, null, null, null, null, null);
-                UserInfo userinfo = new UserInfo();
-                while (c.moveToNext()) {
-                    String id = c.getString(c.getColumnIndex("id"));
-                    String value = c.getString(c.getColumnIndex("value"));
-                    if (id.equals("12325")) {
-                        userinfo.setProvince(value);
-                    } else if (id.equals("12326")) {
-                        userinfo.setCity(value);
-                    } else if (id.equals("4")) {
-                        userinfo.setNickName(value);
-                    } else if (id.equals("12293")) {
-                        userinfo.setProvinceCn(value);
-                    } else if (id.equals("12292")) {
-                        userinfo.setCityCn(value);
-                    } else if (id.equals("2")) {
-                        userinfo.setWxId(value);
-                    } else if (id.equals("6")) {
-                        userinfo.setPhone(value);
-                    } else if (id.equals("42")) {
-                        userinfo.setWxNumber(value);
-                    }
-                }
-                c.close();
-                db.close();
-                SQLiteDatabase db1 = SQLiteDatabase.openDatabase(dbFile.getAbsolutePath(), pass, null, SQLiteDatabase.OPEN_READWRITE, hook);
-                Cursor c1 = db1.query("userinfo2", null, null, null, null, null, null);
-                while (c1.moveToNext()) {
-                    String id = c1.getString(c.getColumnIndex("id"));
-                    String value = c1.getString(c.getColumnIndex("value"));
-                    if (id.equals("USERINFO_SELFINFO_SMALLIMGURL_STRING")) {
-                        userinfo.setHeaderIcon(value);
-                    }
-                }
-                c1.close();
-                db1.close();
-                if (!isFromOld) {
-                    Users users = new Users();
-                    users.setDbPath(dbFile.getAbsolutePath());
-                    users.setPassword(pass);
-                    users.setUin(uin);
-                    DbManager dbManager = new DbManager(this);
-                    ArrayList<Users> data = new ArrayList<>();
-                    data.add(users);
-                    dbManager.add(data);
-                    AppHolder.getInstance().setUsers(users);
-                }
-                return userinfo;
-            } catch (Exception e) {
-                Log.i("szhua", "erro when sql db");
-                return null;
-            }
-        }
-        return null;
-    }
-
-
-    //读取微信中的信息 ；
-    public UserInfo readWeChatDatabase() {
-        //此处用于读取 当前微信号的uin
-        SQLiteDatabase.loadLibs(this);
-        File testFile = new File("/data/data/com.tencent.mm/MicroMsg/");
-        if (!testFile.canRead()) {
-            ChmodUtil.setFileCanRead(testFile);
-        }
-        ArrayList<File> dbDatas = new ArrayList<File>();
-        if (testFile.isDirectory()) {
-            for (int i = 0; i < testFile.listFiles().length; i++) {
-                //获得MicroMsg文件下的cf792f218920a5d21aa5c121bcbe7f65文件 ；
-                File childFile = testFile.listFiles()[i];
-                //获得指定的文件夹下的目录；
-                if (childFile.getName().length() == "cf792f218920a5d21aa5c121bcbe7f65".length()) {
-                    ChmodUtil.setFileCanRead(childFile);
-                    if (childFile.isDirectory() && childFile.exists() && childFile.canRead()) {
-                        for (int j = 0; j < childFile.listFiles().length; j++) {
-                            //获得下一层的数据 ；
-                            File child = childFile.listFiles()[j];
-                            if (child.getName().equals("EnMicroMsg.db")) {
-                                ChmodUtil.setFileCanRead(child);
-                                dbDatas.add(child);
-                            }
-                        }
-                    }
-                }
-
-            }
-        }
-        UserInfo userInfo = null;
-        if (dbDatas.size() == 0) {
-            return null;
-        } else {
-            for (int i = 0; i < dbDatas.size(); i++) {
-                userInfo = getDataWithSqlcipher(dbDatas.get(i), password, false);
-                if (userInfo != null) {
-                    //使用break调出这个循环；
-                    break;
-                }
-            }
-        }
-        return userInfo;
-    }
 
 }

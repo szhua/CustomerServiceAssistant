@@ -2,8 +2,11 @@ package com.pcjh.assistant.entity;
 
 /**
  * Created by szhua on 2016/10/19.
+ *
+ * 数据库中包含的个人信息 ；
  */
 public class UserInfo {
+
     public String province;
     public String city ;
     public String provinceCn ;

