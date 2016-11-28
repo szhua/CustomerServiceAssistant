@@ -11,7 +11,7 @@ https://github.com/sqlcipher/android-database-sqlcipher;
 
 1.  获得手机的IMEI只需获得手机权限就能够轻松的获得。
 2.  这个步骤网上的资料很少，通过观察微信的文件结构获得的。文件路径为："/data/data/com.tencent.mm/shared_prefs/system_config_prefs.xml" 是一个xml文件，当前登录的微信uin的key为default_uin ,通过android中的XmlParser类就能够进行解析，若是当前没有登录微信账号的话，default_uin对应的值为0 。
-3.  IME+uin的意思是将两个字符串进行拼接，然后进行MD5加密，获得加密后字符串的前7位，得到当前登录微信号的enMicroMsg.db的密码；（当前登录微信enMicroMsg.db密码）。
+3.  IME+uin的意思是将两个字符串进行拼接，然后进行MD5加密，获得加密后字符串的前7位，得到当前登录微信号的enMicroMsg.db的密码；<strong>(当前登录微信enMicroMsg.db密码)<strong/>。
 4.  这个步骤不是很容易，网上也没有资料：下面是微信的聊天记录文件目录。
 ![](https://github.com/szhua/CustomerServiceAssistant/blob/master/20141202102707406.png)
 
