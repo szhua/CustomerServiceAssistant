@@ -11,9 +11,9 @@ https://github.com/sqlcipher/android-database-sqlcipher;
 
 1.  获得手机的IMEI只需获得手机权限就能够轻松的获得。
 2.  这个步骤网上的资料很少，通过观察微信的文件结构获得的。文件路径为："/data/data/com.tencent.mm/shared_prefs/system_config_prefs.xml" 是一个xml文件，当前登录的微信uin的key为default_uin ,通过android中的XmlParser类就能够进行解析，若是当前没有登录微信账号的话，default_uin对应的值为0 。
-3.  IME+uin的意思是将两个字符串进行拼接，然后进行MD5加密，获得加密后字符串的前7位，得到当前登录微信号的enMicroMsg.db的密码；<strong>(当前登录微信enMicroMsg.db密码)<strong/>。
+3.  IME+uin的意思是将两个字符串进行拼接，然后进行MD5加密，获得加密后字符串的前7位，得到当前登录微信号的enMicroMsg.db的密码(当前登录微信enMicroMsg.db密码)。
 4.  这个步骤不是很容易，网上也没有资料：下面是微信的聊天记录文件目录。
-![](https://github.com/szhua/CustomerServiceAssistant/blob/master/20141202102707406.png)
+![文件目录](https://github.com/szhua/CustomerServiceAssistant/blob/master/20141202102707406.png)
 
 这个图是从网上copy下来的，实际中的文件目录和这个大致相同，不同的是会有好几个和划红部分相同的文件夹，这个文件夹里面不知道哪个有我们需要的enMicroMsg.db文件，即使有enMicroMsg.db文件
 也不一定是我们需要的那个数据库文件。考虑到一个机器不会有很多的微信号，本人愚笨使用了下面的方式进行解析。
@@ -25,7 +25,7 @@ MIcroMsg文件夹的路径是固定的，直接进行拼接就可以了。然后
 至此，我们就将数据库——enMicroMsg.db文件拿出来，（记住这个enMicroMsg是当前登录用户的数据库文件），并且进行了解密；
 
 <strong>下面是解密的整体步骤：<strong/>
-![](https://github.com/szhua/CustomerServiceAssistant/blob/master/使用sqlChiper解密enMicrMsg.db.png)
+![整体步骤](https://github.com/szhua/CustomerServiceAssistant/blob/master/使用sqlChiper解密enMicrMsg.db.png)
 
 贴出使用sqlChiper解密enMicroMsg的步骤代码：
 
