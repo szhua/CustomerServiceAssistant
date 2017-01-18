@@ -203,7 +203,7 @@ public class NineGridImageView<T> extends ViewGroup {
             } else {
                 Log.e("NineGirdImageView", "Your must set a NineGridImageViewAdapter for NineGirdImageView");
                 return null;
-            }
+        }
         }
     }
 

@@ -34,6 +34,7 @@ public class DBCipherManager {
             synchronized (DBCipherManager.class) {
                 inst = mInstance;
                 if (inst == null) {
+                    //这进行初始化，初始化和地址引用的时间是不确定的，可能初始化没完成，但是有了引用， 这就会不为空===错误就会出现 ；
                     inst = new DBCipherManager(context);
                     mInstance = inst;
                 }

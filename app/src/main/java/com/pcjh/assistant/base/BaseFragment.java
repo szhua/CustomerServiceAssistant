@@ -28,10 +28,7 @@ public class BaseFragment extends Fragment implements INetResult {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
     }
-
-
 
     @Override
     public void onRequestSuccess(int requestCode) {

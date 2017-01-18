@@ -7,6 +7,8 @@ import android.util.Log;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.loopj.android.http.RequestParams;
+import com.mengma.asynchttp.Http;
+import com.mengma.asynchttp.HttpClient;
 import com.mengma.asynchttp.IDao;
 import com.mengma.asynchttp.JsonUtil;
 import com.mengma.asynchttp.RequestCode;
@@ -35,11 +37,12 @@ public class AppendFansDao extends IDao {
 
     public void apppendFans(String wx , String token , String json){
         RequestParams params =new RequestParams();
-        params.add("wx" ,wx) ;
+        params.add("wx" ,wx);
         params.add("token",token);
         params.put("fans_wx_tags",json);
         postRequest(Constant.BASE_URL+Constant.APPEND_FANS,params, RequestCode.APPENDFANS);
     }
+
 
     public void changeFans(String wx , String token , String json){
         RequestParams params =new RequestParams();

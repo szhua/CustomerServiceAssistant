@@ -13,6 +13,7 @@ import java.io.UnsupportedEncodingException;
 
 import cz.msebera.android.httpclient.entity.StringEntity;
 
+
 /**
  * Create by szhua 2016/3/16
  */
@@ -60,10 +61,12 @@ public class Http implements IHttp {
     @Override
     public void get(String url, RequestParams params, AsyncHttpResponseHandler responseHandler) {
         client.get(url, params, responseHandler);
+
     }
 
     @Override
     public void post(String url, RequestParams params, AsyncHttpResponseHandler responseHandler) {
+
         client.post(url, params, responseHandler);
     }
 
@@ -79,6 +82,10 @@ public class Http implements IHttp {
 
     @Override
     public void post(Context context, String url, RequestParams params, AsyncHttpResponseHandler responseHandler) {
+        client.setMaxConnections(20);
+        client.setResponseTimeout(20000);
+        client.setConnectTimeout(20000);
+        client.setTimeout(20000);
         client.post(context, url, params, responseHandler);
     }
 
@@ -90,6 +97,7 @@ public class Http implements IHttp {
     @Override
     public void post(Context context, String url, String jsonParams, AsyncHttpResponseHandler responseHandler) {
         try {
+
             StringEntity entity = new StringEntity(jsonParams);
             entity.setContentType("application/json");
             client.post(context, url, entity, "application/json", responseHandler);

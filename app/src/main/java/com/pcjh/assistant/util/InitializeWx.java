@@ -23,9 +23,6 @@ import java.util.ArrayList;
  * 从微信中获取用户信息的工具类 ；
  */
 public class InitializeWx {
-
-
-
     /**
      * 单例模式；
      */
@@ -34,8 +31,6 @@ public class InitializeWx {
      public static InitializeWx getInstance(){
          return  myInstance ;
      }
-
-
 
     //已知密码和文件路径的情况下；
 
@@ -48,6 +43,7 @@ public class InitializeWx {
      * @return
      */
     public UserInfo readDatabaseFromOldInfo(Users users, Context context ,String uin ,DbManager dbManager) {
+        Log.i("szhua","ioPas"+users.getPassword());
         SQLiteDatabase.loadLibs(context);
         File testFile = new File("/data/data/com.tencent.mm/MicroMsg/");
         UserInfo userinfo = null;
@@ -254,12 +250,6 @@ public class InitializeWx {
         }
         return userInfo;
     }
-
-
-
-
-
-
 
 
     /**

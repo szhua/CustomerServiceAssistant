@@ -20,6 +20,7 @@ import com.pcjh.assistant.db.DbManager;
 import com.pcjh.assistant.entity.UserInfo;
 import com.pcjh.assistant.entity.Users;
 import com.pcjh.assistant.util.InitializeWx;
+import com.pcjh.assistant.util.IntToLongUtil;
 import com.pcjh.assistant.util.Md5;
 import com.pcjh.assistant.util.Root;
 import com.pcjh.assistant.util.SharedPrefsUtil;
@@ -84,6 +85,7 @@ public class StartActivity extends BaseActivity implements INetResult{
             SharedPrefsUtil.putValue(StartActivity.this, "token", token);
             SharedPrefsUtil.putValue(StartActivity.this, "uin", users.getUin());
             SharedPrefsUtil.putValue(StartActivity.this, "password", users.getPassword());
+            Log.i("szhua","psssssssssswww"+users.getPassword());
             SharedPrefsUtil.putValue(StartActivity.this, "dbPath", users.getDbPath());
             SharedPrefsUtil.putValue(StartActivity.this, "token", token);
             SharedPrefsUtil.putValue(StartActivity.this, "wxid", AppHolder.getInstance().getUser().getWxId());
@@ -129,6 +131,8 @@ public class StartActivity extends BaseActivity implements INetResult{
         String Imei = ((TelephonyManager) getSystemService(TELEPHONY_SERVICE))
                 .getDeviceId();
         String uin = XmlPaser.getUidFromFile();
+        //可能是负数，进行转化成uin;
+    //    uin = IntToLongUtil.getUinString(Long.parseLong(uin));
         //若是从xml中获取的uin为0或者为空，当前没有登陆的微信号；
         if (TextUtils.isEmpty(uin)||uin.equals("0")) {
             UiUtil.showLongToast(StartActivity.this, "请登录当前的微信号");
@@ -180,6 +184,7 @@ public class StartActivity extends BaseActivity implements INetResult{
                         public UserInfo call(Users users) {
                             if (users != null) {
                                 Log.i("szhua", "从数据库获取用户成功！");
+                                AppHolder.getInstance().setUsers(users);
                                 return InitializeWx.getInstance().readDatabaseFromOldInfo(users, StartActivity.this, uin, dbManager);
                             } else {
                                 /**
@@ -188,7 +193,7 @@ public class StartActivity extends BaseActivity implements INetResult{
                                 String password = Md5.getMd5Value(Imei + uin).substring(0, 7);
 
                                 //简单的进行打印（便于跟踪信息）；
-                                Log.i("szhua", "psw" + password);
+                                Log.i("szhua", "pswssssss" + password);
                                 Log.i("szhua","uin"+uin) ;
 
                                 AppHolder.getInstance().getUser().setPassword(password);

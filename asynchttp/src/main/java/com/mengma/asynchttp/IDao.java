@@ -41,6 +41,8 @@ public abstract class IDao {
     public abstract void onRequestSuccess(JsonNode result, int requestCode) throws IOException;
 
 
+
+
     /**
      * get请求网络，本方法提供结果的分发
      *

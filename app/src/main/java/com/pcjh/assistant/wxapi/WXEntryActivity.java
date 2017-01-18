@@ -1,6 +1,7 @@
 package com.pcjh.assistant.wxapi;
 
 import android.app.Activity;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.tencent.mm.sdk.modelbase.BaseReq;
@@ -22,6 +23,7 @@ public class WXEntryActivity extends Activity  implements IWXAPIEventHandler {
             case BaseResp.ErrCode.ERR_OK:
                 Toast.makeText(this, "发送成功", Toast.LENGTH_LONG).show();
                 finish();
+
                 break;
             case BaseResp.ErrCode.ERR_USER_CANCEL:
                 Toast.makeText(this, "分享取消", Toast.LENGTH_LONG).show();

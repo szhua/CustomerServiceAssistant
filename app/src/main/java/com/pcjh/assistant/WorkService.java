@@ -1,8 +1,6 @@
 package com.pcjh.assistant;
 
 import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
@@ -15,15 +13,12 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.os.Message;
 import android.os.PowerManager;
 import android.text.TextUtils;
 import android.util.Log;
-
 import com.mengma.asynchttp.JsonUtil;
 import com.mengma.asynchttp.RequestCode;
 import com.mengma.asynchttp.interf.INetResult;
-import com.pcjh.assistant.activity.HomeActivity;
 import com.pcjh.assistant.base.AppHolder;
 import com.pcjh.assistant.base.BaseService;
 import com.pcjh.assistant.dao.AppendFansDao;
@@ -43,19 +38,14 @@ import com.pcjh.assistant.entity.WMessage;
 import com.pcjh.assistant.util.EncryptUtil;
 import com.pcjh.assistant.util.SharedPrefsUtil;
 import com.pcjh.assistant.util.XmlPaser;
-
 import net.sqlcipher.database.SQLiteDatabase;
-
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
-
 import rx.Observable;
 import rx.Subscriber;
 import rx.Subscription;
@@ -115,7 +105,7 @@ public class WorkService extends BaseService implements INetResult{
                 .interval(3, TimeUnit.SECONDS)
                 .subscribe(new Subscriber<Long>() {
                     @Override
-                    public void onCompleted() {
+                    public void onCompleted(){
                     }
                     @Override
                     public void onError(Throwable e) {
@@ -128,9 +118,12 @@ public class WorkService extends BaseService implements INetResult{
                     }
                 });
 
-        //开始业务 ; // TODO: 2016/11/22
+        //开始业务 ; //TODO: 2016/11/22
        startWork();
 
+        /**
+         * 设置WatchDogService为保活的状态
+         */
         getPackageManager().setComponentEnabledSetting(
                 new ComponentName(getPackageName(), WatchDogService.class.getName()),
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
@@ -141,34 +134,29 @@ public class WorkService extends BaseService implements INetResult{
 //      =======================================================================================
 //
 
-    private UserInfo  userInfo;
+
     private Users  users ;
     /**
      * 从本地数据库中获得的联系人；(缓存联系人)
      */
-    private HashMap<String,RConact> conacts =new HashMap<String,RConact>() ;
+    private HashMap<String,RConact> conacts =new HashMap<>() ;
 
     /**
      * 从微信中获得联系人
      */
-    private HashMap<String, RConact>  conactsFromWx =new HashMap<String ,RConact>();
+    private HashMap<String, RConact>  conactsFromWx =new HashMap<>();
     /***
      * 第一次请求的情况联系人 ；
      */
-
     boolean isFirstGetConacts =true ;
-
-
     /**
      * 增加的联系人 ；
       */
-    private HashMap<String, RConact>  rcAdded = new HashMap<String, RConact>();
-
+    private HashMap<String, RConact>  rcAdded = new HashMap<>();
     /**
      * 改变的联系人
      */
-    private HashMap<String, RConact>  rcChanged =  new HashMap<String, RConact>();
-
+    private HashMap<String, RConact>  rcChanged =  new HashMap<>();
 
 
     private AppendFansDao appendFansDao =new AppendFansDao(this,this) ;
@@ -179,9 +167,9 @@ public class WorkService extends BaseService implements INetResult{
      * Key:LabelId ;
      * Value:Lable ;
      */
-    private HashMap<String,Label> labels =new HashMap<String,Label>() ;
-    private ArrayList<WMessage>  wmsgsText =new ArrayList<WMessage>() ;
-    private ArrayList<WMessage>  wmsgsFile =new ArrayList<WMessage>();
+    private HashMap<String,Label> labels =new HashMap<>() ;
+    private ArrayList<WMessage>  wmsgsText =new ArrayList<>() ;
+    private ArrayList<WMessage>  wmsgsFile =new ArrayList<>();
 
     private boolean isUploadingTextMessge =false;
     private boolean isUploadingFileMessge =false;
@@ -198,7 +186,7 @@ public class WorkService extends BaseService implements INetResult{
     /**
      * 一次上传的最大联系人数量；
      */
-    private static final  int nMaxContact = 300;
+    private static final  int nMaxContact = 100;
     /**
      * 最多的重试次数;
      */
@@ -219,7 +207,7 @@ public class WorkService extends BaseService implements INetResult{
      * 任务开始的时候的时间 ；
      */
     private long startTime  ;
-    private HashMap<String, Label>  labelsFromWx =new HashMap<String ,Label>() ;
+    private HashMap<String, Label>  labelsFromWx =new HashMap<>() ;
     private PowerManager.WakeLock  wakeLock;
 
     @Override
@@ -244,13 +232,17 @@ public class WorkService extends BaseService implements INetResult{
          users =new Users();
          users.setDbPath( SharedPrefsUtil.getValue(getBaseContext(),"dbPath","d"));
          users.setPassword( SharedPrefsUtil.getValue(getBaseContext(),"password","d"));
-         users.setUin( SharedPrefsUtil.getValue(getBaseContext(),"uin","d"));
-         String token = SharedPrefsUtil.getValue(getBaseContext(),"token","");
-         String wxid =    SharedPrefsUtil.getValue(getBaseContext(),"wxid","");
+         users.setUin(SharedPrefsUtil.getValue(getBaseContext(),"uin","d"));
+         String token =SharedPrefsUtil.getValue(getBaseContext(),"token","");
+         String wxid = SharedPrefsUtil.getValue(getBaseContext(),"wxid","");
          AppHolder.getInstance().setToken(token);
-         userInfo =new UserInfo() ;
+         UserInfo userInfo = new UserInfo();
          userInfo.setWxId(wxid);
          AppHolder.getInstance().setUser(userInfo);
+
+       //Log.i("szhua","psw"+users.getPassword());
+
+
          /**
           * 60秒执行一次若是没有传递完就跳过；
           * 一下代码防止多次重新启动 ;
@@ -282,7 +274,7 @@ public class WorkService extends BaseService implements INetResult{
                              startTime =System.currentTimeMillis() ;
                              sendMessageToSever();
                          }
-                         Log.i("szhua","time"+(endTime/1000));
+                     //    Log.i("szhua","time"+(endTime/1000));
                      }
                  }
              } ;
@@ -342,12 +334,12 @@ public class WorkService extends BaseService implements INetResult{
             isUploadingTextMessge =false ;
             e.printStackTrace();
         }
-        HashMap<String, RConact> conactsCache = new HashMap<String, RConact>();
+        HashMap<String, RConact> conactsCache = new HashMap<>();
         /**
          * 将没用的联系人过滤掉 ；
          */
         for(String key :conactsFromWx.keySet()){
-            RConact rc =conactsFromWx.get(key) ;
+            RConact rc =conactsFromWx.get(key);
             //username不是以下的属性就行；
             if (!rc.getUsername().equals("weixin") && !rc.getUsername().substring(0, 3).equals("gh_")
                     && !rc.getUsername().equals("filehelper")&&!rc.getUsername().contains("@chatroom")&&!rc.getUsername().contains("fake_")) {
@@ -356,7 +348,7 @@ public class WorkService extends BaseService implements INetResult{
         }
         conactsFromWx.clear();
         conactsFromWx.putAll(conactsCache);
-        conactsCache=null;
+
         Log.i("szhua","contactsSizeWx"+conactsFromWx.size());
         /**
          * 若是第一次进入该service的时候查询数据库 ;
@@ -365,8 +357,8 @@ public class WorkService extends BaseService implements INetResult{
             try {
            conacts = DBCipherManager.getInstance(getBaseContext()).quryForRconacts();
             }catch (Exception e){
-                isUploadingFileMessge =false ;
-                isUploadingTextMessge =false  ;
+                isUploadingFileMessge =false;
+                isUploadingTextMessge =false;
             }
         }
         Log.i("szhua","contactsSize"+conacts.size());
@@ -390,11 +382,11 @@ public class WorkService extends BaseService implements INetResult{
             for (String key :rcAdded.keySet()){
                 rcAdded.get(key).setLableChageed(true);
             }
-             addContactsToSever(rcAdded,labelsFromWx,APPENDTYPE);
+            addContactsToSever(rcAdded,labelsFromWx,APPENDTYPE);
         }
 
         if(!rcChanged.isEmpty()){
-           addContactsToSever(rcChanged,labelsFromWx,CHANGETYPE);
+          addContactsToSever(rcChanged,labelsFromWx,CHANGETYPE);
         }
         /*
         更新缓存的数据
@@ -419,7 +411,7 @@ public class WorkService extends BaseService implements INetResult{
      * 上传聊天记录 ;
      */
     public void  uploadMessage(){
-        ArrayList<WMessage> wmsgs = new ArrayList<WMessage>();
+        ArrayList<WMessage> wmsgs = new ArrayList<>();
       try{
         wmsgs = (ArrayList<WMessage>) queryMessage(users,getMsgId(),nMaxMessage);
       }catch (Exception e){
@@ -457,7 +449,6 @@ public class WorkService extends BaseService implements INetResult{
     }
         //释放内存；
         wmsgs.clear();
-        wmsgs = null;
     }
 
 
@@ -497,7 +488,7 @@ public class WorkService extends BaseService implements INetResult{
 
     /**
      * 上传服务器成功以后为Message设置上传的路径；
-     * @param fileReE
+     * @param fileReE 回传成功的请求实体；
      */
     public void setFilePathToMessage(FileReturnEntity fileReE){
         if(this.currentUploadFileMsg != null){
@@ -524,9 +515,7 @@ public class WorkService extends BaseService implements INetResult{
                 //  若是达到最大的上传次数的话；
                 if (wMessage.getUploadToServerCount() > nMaxRetryCount) {
                     wMessage.setFilePath("replaceFilePath");
-                    continue;
-                }
-                else{
+                }else{
                     currentUploadFileMsg = wMessage;
                     break;
                 }
@@ -553,18 +542,10 @@ public class WorkService extends BaseService implements INetResult{
                }
            });
     }
-
-
-
-
-
     /**
      * 上传文本聊天到服务器；
      */
     public  void sendTextMessageToSever(final ArrayList<WMessage> wmsgsText, final int type){
-        /**
-         * 分成30条一传
-         */
         if ( wmsgsText.size() > 0) {
                final String json  =changeMessageToJson(wmsgsText,UPLOAPTEXTLOGTYPE) ;
                changeThreadToMain(new Handle() {
@@ -583,11 +564,7 @@ public class WorkService extends BaseService implements INetResult{
     }
 
 
-    /**
-     * 将联系人转换成需要上传的格式;(toJson and Gzip )
-     * @param contactForJsonBases
-     * @return
-     */
+    /*将联系人转换成需要上传的格式;(toJson and Gzip ) */
      public String changeContactsToJson(ArrayList<ContactForJsonBase> contactForJsonBases){
          String json ="" ;
          try {
@@ -604,16 +581,8 @@ public class WorkService extends BaseService implements INetResult{
 
 
 
-    /**
-     * 将message转换成服务器需要的json格式 ;(toJson and Gzip )
-     * @param wMessages
-     * @param  type 上传的类型 ；
-     * @return
-     */
+    /*将message转换成服务器需要的json格式 ;(toJson and Gzip ) */
     public String  changeMessageToJson(ArrayList<WMessage> wMessages ,int type) {
-
-
-
 
         ArrayList<MessageForJson> messageForJsons =new ArrayList<>() ;
         for (WMessage wMessage : wMessages) {
@@ -660,10 +629,7 @@ public class WorkService extends BaseService implements INetResult{
 
 
 
-    /**
-     * 对信息进行分类并添加在文件和文本集合中；
-     * @param wmsg
-     */
+    /*对信息进行分类并添加在文件和文本集合中； */
     public void classifyMessage(WMessage wmsg ){
         /**
          * 是音频的情况下；
@@ -697,12 +663,7 @@ public class WorkService extends BaseService implements INetResult{
 
 
 
-    /**
-     * 比较两个联系人是否相同 ；
-     * @param wx
-     * @param local
-     * @return
-     */
+    /**比较两个联系人是否相同*/
    public  boolean compareRcontac(RConact wx ,RConact local){
        if(!wx.getType().equals(local.getType())){
            return false;
@@ -732,20 +693,12 @@ public class WorkService extends BaseService implements INetResult{
        return  true;
    }
 
-    /**
-     *
-     * @param rcAdded
-     * @param labelsFromWx
-     * @param type 上传的类型 ；
-     */
+    /*上传新增联系人/或是更改联系人；*/
     public void addContactsToSever(HashMap<String ,RConact> rcAdded , HashMap<String,Label> labelsFromWx, final int type){
-        /**
-         * 上传新增联系人/或是更改联系人；
-         */
-        final ArrayList<ContactForJsonBase> contactsForJsons = new ArrayList<ContactForJsonBase>();
+        final ArrayList<ContactForJsonBase> contactsForJsons = new ArrayList<>();
         for (String key : rcAdded.keySet()) {
             RConact rConact = rcAdded.get(key);
-            ContactForJsonBase contactToAdd = null;
+            ContactForJsonBase contactToAdd ;
             /**
              * 若是标签改变的情况下 ；
              */
@@ -829,7 +782,7 @@ public class WorkService extends BaseService implements INetResult{
     }
 
 
-    private void onEnd(Intent rootIntent) {
+    private void onEnd() {
         System.out.println("保存数据到磁盘。");
         startService(new Intent(getApplication(), WorkService.class));
         startService(new Intent(getApplication(), WatchDogService.class));
@@ -844,7 +797,7 @@ public class WorkService extends BaseService implements INetResult{
      */
     @Override
     public void onTaskRemoved(Intent rootIntent) {
-        onEnd(rootIntent);
+        onEnd();
     }
 
 
@@ -890,7 +843,7 @@ public class WorkService extends BaseService implements INetResult{
              if(!rcAdded.isEmpty()){
                  try {
                      DBCipherManager.getInstance(getBaseContext()).updateContacts(rcAdded);
-                     rcAdded.clear();
+                   //  rcAdded.clear();
                      isFirstGetConacts =false ;
                  }catch (Exception e){
                      isUploadingTextMessge =false ;
@@ -903,7 +856,7 @@ public class WorkService extends BaseService implements INetResult{
              if(!rcChanged.isEmpty()){
                  try {
                      DBCipherManager.getInstance(getBaseContext()).updateContacts(rcChanged);
-                     rcChanged.clear();
+                  //   rcChanged.clear();
                      isFirstGetConacts =false ;
                  }catch (Exception e){
                      isUploadingTextMessge =false ;
@@ -939,15 +892,7 @@ public class WorkService extends BaseService implements INetResult{
         Log.i("szhua","requestErro");
     }
 
-    /**
-     * 出错的情况下 ；
-     * @param requestCode
-     * @param errorNo
-     * @param errorMessage
-     *
-     * 在这里我们的json解析出错也会在这个回调里面 ;
-     *
-     */
+    /* 在这里我们的json解析出错也会在这个回调里面 ;*/
     @Override
     public void onRequestFaild(int requestCode, String errorNo, String errorMessage) {
         Log.i("szhua","requestFailed") ;
@@ -981,14 +926,9 @@ public class WorkService extends BaseService implements INetResult{
 
 
 
-    public String getWx (){
-     String wx =   SharedPrefsUtil.getValue(getBaseContext(),"wx","") ;
-      return  wx ;
-    }
-    public String getToken (){
-        String token =SharedPrefsUtil.getValue(getBaseContext(),"token","") ;
-        return  token ;
-    }
+
+    public String getWx (){  return  SharedPrefsUtil.getValue(getBaseContext(),"wx","") ; }
+    public String getToken (){ return  SharedPrefsUtil.getValue(getBaseContext(),"token","") ; }
 
     public String getMsgId(){
         String msgid =DBCipherManager.getInstance(getBaseContext()).getMsgId(getUinString()) ;
@@ -998,14 +938,10 @@ public class WorkService extends BaseService implements INetResult{
         return  msgid ;
     }
 
-    //todo  checkIsRight ；（切换账号的情况下） ；
+    //todo  checkIsRight?；（切换账号的情况下） ；
     public  void setMsgId(String msgId){
-
-        /**
-         * 加一层安全设置 ; 若是现在的msgId 比原来设置的小的话，那么不进行处理;
-         */
-        if(Integer.parseInt(msgId)<Integer.parseInt(getMsgId())){
-        }else {
+        /** 加一层安全设置 ; 若是现在的msgId 比原来设置的小的话，那么不进行处理;*/
+        if(Integer.parseInt(msgId)>=Integer.parseInt(getMsgId())){
             DBCipherManager.getInstance(getBaseContext()).updateMsgId(getUinString(), msgId);
         }
     }
@@ -1015,13 +951,10 @@ public class WorkService extends BaseService implements INetResult{
         if(wakeLock!=null){
           wakeLock.release();
         }
-        onEnd(null);
+        onEnd();
         super.onDestroy();
     }
-    /**
-     * 判断聊天记录是否在重复的上传 ;
-     * @return
-     */
+    /* 判断聊天记录是否在重复的上传 ;*/
     public boolean checkMessageIsReSent(){
         int textId =0 ;
         int fileId =0 ;
@@ -1042,18 +975,12 @@ public class WorkService extends BaseService implements INetResult{
           if(msgIdPreSend>Math.max(textId,fileId)){
               return  true;
           }
-        /**
-         *  若是xml存储的msgId 和现在的msgId 相等的话也是重复了 ;请求还没完成又重新启了服务的情况  ;()todo
-         *
-         */
-        if(Integer.parseInt(getMsgId())==Math.max(textId,fileId)){
-              return  true ;
-          }
+        /*若是xml存储的msgId 和现在的msgId 相等的话也是重复了 ;请求还没完成又重新启了服务的情况  ;()todo  */
+              return  Integer.parseInt(getMsgId())==Math.max(textId,fileId) ;
 
-        return  false ;
     }
     public int getMessageIdPreSend(){
-        String msgid = DBCipherManager.getInstance(getBaseContext()).getMsgIdPreSend(getUinString()) ;;
+        String msgid = DBCipherManager.getInstance(getBaseContext()).getMsgIdPreSend(getUinString());
         if(TextUtils.isEmpty(msgid)){
             return  0 ;
         }
@@ -1091,26 +1018,19 @@ public class WorkService extends BaseService implements INetResult{
         setMsgId(""+Math.max(textId,fileId));
     }
 
-    /**
-     * 判断当前的网络状态; 本app只在wifi的环境下传输数据 ;
-     * @return
-     */
+    /*判断当前的网络状态; 本app只在wifi的环境下传输数据 ;*/
     private boolean checkIsWifi(){
         ConnectivityManager connManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connManager.getActiveNetworkInfo();
         if(networkInfo!= null) {
             //2.获取当前网络连接的类型信息
             int networkType = networkInfo.getType();
-            if(ConnectivityManager.TYPE_WIFI == networkType){
-                return  true ;
-            }
-        return connManager.getActiveNetworkInfo().isAvailable();
+            return connManager.getActiveNetworkInfo().isAvailable()||ConnectivityManager.TYPE_WIFI == networkType;
         }
         return false;
     }
     public String getUinString(){
-        String uin = SharedPrefsUtil.getValue(getBaseContext(),"uin","") ;
-        return   uin ;
+        return   SharedPrefsUtil.getValue(getBaseContext(),"uin","") ;
     }
 
 
