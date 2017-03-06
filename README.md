@@ -120,9 +120,163 @@ private  UserInfo  readUserInfoFromWx(File dbFile ,String pass ,SQLiteDatabaseHo
 ```
 
 <strong> 以上简单的介绍一下怎样的解密微信的数据库，在手机root的情况下，使用怎样的方式去获得。需要提及的是，android的微信数据库加密使用的就是sqlChiper的开源库所以我们才得以顺利的破解人家数据库。若是微信版本变更，使用别的加密方式我们就难以下手了~
-
-感谢在研究过程中机遇帮助的所有人！
 <strong/>
+<hr/>
+<hr/>
+<strong  >关于本例中的进程保活手段
+ 微信数据的上传需要一个常驻的后台任务，这个任务的优先程度，存活率保证了数据上传的稳定性，下面是为了
+保活实行的一些手段。<strong/>
+
+
+> IPC机制：AIDL让进程之间保持长连接
+
+ ```java
+   /*关于AIDL机制，请参考一些文档
+   注：主进程与守护进程都要进行返回Binder
+   */
+   @Override
+    public IBinder onBind(Intent intent) {
+        return customBinder;
+    }
+  private class CustomBinder extends  CustomAidlInterface.Stub{
+        @Override
+        public void basicTypes(int anInt, long aLong, boolean aBoolean, float aFloat,
+        double aDouble, String aString) throws RemoteException {
+        }
+    }
+ ```
+>使用bindService监听服务之间的链接。
+
+```java
+ /*服务之间的绑定：bindService*/
+ WorkService.this.bindService(new Intent(WorkService.this,WatchDogService.class),customConnection, Context.BIND_IMPORTANT);
+
+ /*监听服务之间的链接情况*/
+ private class CustomConnection implements ServiceConnection{
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+        }
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            WorkService.this.startService(new Intent(WorkService.this,WatchDogService.class));
+            WorkService.this.bindService(new Intent(WorkService.this,WatchDogService.class),customConnection,Context.BIND_IMPORTANT) ;
+        }
+    }
+```
+
+>启动前台服务，提高进程的优先级。
+
+```java
+   /*这样会在启动服务的时候多一个NOtification,但是无伤大雅，能够提高进程的优先级*/
+   
+   Notification.Builder builder =new Notification.Builder(this);
+        PendingIntent pendingIntent =PendingIntent.getService(this,0,intent,0);
+        builder.setSmallIcon(R.mipmap.ic_launcher)
+                .setContentIntent(pendingIntent)
+                .setTicker("启动服务中")
+                .setAutoCancel(false)
+                .setWhen(System.currentTimeMillis())
+                .setContentTitle("客服助手");
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.JELLY_BEAN){
+            builder.setContentInfo("客服助手");
+        }
+        if(Build.VERSION.SDK_INT>Build.VERSION_CODES.JELLY_BEAN){
+            startForeground(startId,builder.build());
+        }else{
+            startForeground(startId,builder.getNotification());
+        }
+```
+> onStartCommand中返回数值，保证服务的存活率。
+
+ ```java
+   return START_STICKY;
+```
+
+> android5.0以上的使用JobScheduler,5.0以下的使用AlarmManager，定时任务定时唤醒
+
+ ```java
+ /**
+ * Android 5.0+ 使用的 JobScheduler.
+ * 运行在 :watch 子进程中.
+ */
+@TargetApi(Build.VERSION_CODES.LOLLIPOP)
+public class JobSchedulerService extends JobService {
+...
+}
+/*使用*/
+  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            JobInfo.Builder builder = new JobInfo.Builder(sHashCode, new ComponentName(getApplication(), JobSchedulerService.class));
+            builder.setPeriodic(INTERVAL_WAKE_UP);
+            //Android 7.0+ 增加了一项针对 JobScheduler 的新限制，最小间隔只能是下面设定的数字
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) builder.setPeriodic(JobInfo.getMinPeriodMillis(), JobInfo.getMinFlexMillis());
+            builder.setPersisted(true);
+            JobScheduler scheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
+            scheduler.schedule(builder.build());
+        } 
+        
+        
+          //Android 4.4- 使用 AlarmManager
+            AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
+            Intent i = new Intent(getApplication(), WorkService.class);
+            PendingIntent pi = PendingIntent.getService(getApplication(), sHashCode, i, PendingIntent.FLAG_UPDATE_CURRENT);
+            am.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + INTERVAL_WAKE_UP, INTERVAL_WAKE_UP, pi);
+```
+> 使用RxJava中的订阅机制，防止任务的重复启动，监测服务的存活。
+
+ ```java
+   if (sSubscription != null && !sSubscription.isUnsubscribed()&&sSubscription2!=null&&!sSubscription2.isUnsubscribed()) return START_STICKY;
+
+        sSubscription = Observable
+                .interval(5, TimeUnit.SECONDS)
+                .subscribe(new Subscriber<Long>() {
+                    @Override
+                    public void onCompleted(){
+                    }
+                    @Override
+                    public void onError(Throwable e){
+                    }
+                    @Override
+                    public void onNext(Long count) {
+                        Log.i("testIsRunning","isRunning!"+Thread.currentThread().getName());
+                    }
+                });
+
+
+
+        sSubscription2 =  Observable
+                .interval(60, TimeUnit.SECONDS)
+                .subscribeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<Long>() {
+                    @Override
+                    public void onCompleted(){
+                    }
+                    @Override
+                    public void onError(Throwable e){
+                    }
+                    @Override
+                    public void onNext(Long count) {
+                        Log.i("testIsRunning","isRunning2!"+Thread.currentThread().getName());
+                        /*之所以使用handler来执行任务，这里是保证此Subscription不被销毁，持续的进行周期性的上传*/
+                        workHandler.sendEmptyMessage(0) ;
+                    }
+                });
+
+```
+>简单守护开机广播
+
+   ```java
+     //若需要防止 CPU 休眠，这里给出了 WakeLock 的参考实现
+         PowerManager pom = (PowerManager) getSystemService(POWER_SERVICE);
+        sWakeLock = pom.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WatchDogService.class.getSimpleName());
+        sWakeLock.setReferenceCounted(false);
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(Intent.ACTION_SCREEN_OFF);
+        intentFilter.addAction(Intent.ACTION_SCREEN_ON);
+        try {
+            getApplication().registerReceiver(WakeLockReceiver.getInstance(), intentFilter);
+        } catch (Exception ignored) {
+        }
+```
 
 
 
