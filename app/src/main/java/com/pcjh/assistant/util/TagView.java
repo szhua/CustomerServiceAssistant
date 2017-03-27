@@ -3,24 +3,16 @@ package com.pcjh.assistant.util;
 import android.app.Service;
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.Toast;
-
 import com.pcjh.assistant.R;
 import com.pcjh.assistant.adapter.TagAllAdapterForGrid;
 import com.pcjh.assistant.adapter.TagSelectedAdapterForGrid;
 import com.pcjh.assistant.entity.Tag;
 import com.pcjh.assistant.interfer.TagAddListener;
 import com.pcjh.assistant.interfer.TagDeleteListener;
-
 import java.util.ArrayList;
-
-import butterknife.InjectView;
-
 /**
  * Created by szhua on 2016/11/12.
  * 自定义组合控件 ；
@@ -37,7 +29,6 @@ public class TagView extends LinearLayout {
     private TagAllAdapterForGrid tagAllAdapterForGrid ;
     private TagSelectedAdapterForGrid tagSelectedAdapterForGrid ;
 
-    private TagAddListener tagAddListener  ;
     private ArrayList<Tag> tagsAdded  =new ArrayList<>();
     private ArrayList<Tag> tagsDelete =new ArrayList<>();
     private ArrayList<Tag> orignData =new ArrayList<>() ;
@@ -52,7 +43,6 @@ public class TagView extends LinearLayout {
     }
 
     public void setTagAddListener(TagAddListener tagAddListener) {
-        this.tagAddListener = tagAddListener;
         tagAllAdapterForGrid.setTagAddListener(tagAddListener);
     }
 

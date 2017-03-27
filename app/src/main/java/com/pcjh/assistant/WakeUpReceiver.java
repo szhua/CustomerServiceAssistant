@@ -16,9 +16,7 @@ public class WakeUpReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         context.startService(new Intent(context, WorkService.class));
     }
-
     public static class WakeUpAutoStartReceiver extends BroadcastReceiver {
-
         @Override
         public void onReceive(Context context, Intent intent) {
             context.startService(new Intent(context, WorkService.class));

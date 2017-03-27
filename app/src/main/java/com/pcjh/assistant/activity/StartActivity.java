@@ -1,14 +1,16 @@
 package com.pcjh.assistant.activity;
 
+import android.annotation.TargetApi;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.v7.widget.RecyclerView;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
-
 import com.mengma.asynchttp.RequestCode;
 import com.mengma.asynchttp.interf.INetResult;
 import com.pcjh.assistant.R;
@@ -16,7 +18,9 @@ import com.pcjh.assistant.WorkService;
 import com.pcjh.assistant.base.AppHolder;
 import com.pcjh.assistant.base.BaseActivity;
 import com.pcjh.assistant.dao.InitDao;
+import com.pcjh.assistant.db.DBCipherManager;
 import com.pcjh.assistant.db.DbManager;
+import com.pcjh.assistant.entity.ServiceUserInfo;
 import com.pcjh.assistant.entity.UserInfo;
 import com.pcjh.assistant.entity.Users;
 import com.pcjh.assistant.util.InitializeWx;
@@ -26,8 +30,9 @@ import com.pcjh.assistant.util.Root;
 import com.pcjh.assistant.util.SharedPrefsUtil;
 import com.pcjh.assistant.util.XmlPaser;
 import com.pcjh.liabrary.utils.UiUtil;
-
 import java.util.ArrayList;
+import java.util.Random;
+
 import butterknife.ButterKnife;
 import rx.Observable;
 import rx.Subscriber;
@@ -65,12 +70,11 @@ public class StartActivity extends BaseActivity implements INetResult{
         Root.getInstance().getRoot(new Root.IGotRootListener() {
             @Override
             public void onGotRootResult(boolean hasRoot) {
-
-                if (hasRoot) {
+               if (hasRoot) {
                     getUserInfo();
                 } else {
-                    UiUtil.showLongToast(StartActivity.this, "未获得root权限");
-                }
+                  UiUtil.showLongToast(StartActivity.this, "未获得root权限");
+              }
             }
         });
     }
@@ -79,16 +83,31 @@ public class StartActivity extends BaseActivity implements INetResult{
     public void onRequestSuccess(int requestCode) {
         super.onRequestSuccess(requestCode);
         if(requestCode==RequestCode.INITSUCESS) {
+
             String token = initDao.getToken();
             AppHolder.getInstance().setToken(token);
             Users users = AppHolder.getInstance().getUsers();
+
             SharedPrefsUtil.putValue(StartActivity.this, "token", token);
             SharedPrefsUtil.putValue(StartActivity.this, "uin", users.getUin());
             SharedPrefsUtil.putValue(StartActivity.this, "password", users.getPassword());
-            Log.i("szhua","psssssssssswww"+users.getPassword());
+            Log.i("szhua","pasword"+users.getPassword());
+            Log.i("szhua","dbPath"+users.getDbPath());
             SharedPrefsUtil.putValue(StartActivity.this, "dbPath", users.getDbPath());
             SharedPrefsUtil.putValue(StartActivity.this, "token", token);
             SharedPrefsUtil.putValue(StartActivity.this, "wxid", AppHolder.getInstance().getUser().getWxId());
+
+            ServiceUserInfo info =new ServiceUserInfo() ;
+            info.setDbPath(users.getDbPath());
+            info.setPass(users.getPassword());
+            info.setUin(users.getUin());
+            info.setToken(token);
+            info.setWxid(AppHolder.getInstance().getUser().getWxId());
+            info.setUsername(SharedPrefsUtil.getValue(StartActivity.this, "wx","po"));
+
+            Log.i("szhua",SharedPrefsUtil.getValue(StartActivity.this, "wx","po"));
+            DBCipherManager.getInstance(this).updateUserInfo(info);
+
             new Thread(){
                 @Override
                 public void run() {
@@ -109,7 +128,7 @@ public class StartActivity extends BaseActivity implements INetResult{
     @Override
     public void onRequestError(int requestCode, String errorInfo, int erro_code) {
         super.onRequestError(requestCode,errorInfo,erro_code);
-        if(requestCode== RequestCode.CODE_0){
+        if(requestCode== RequestCode.INITSUCESS){
             Toast.makeText(this,"此微信号未被授权",Toast.LENGTH_SHORT).show();
             finish();
         }
@@ -121,6 +140,7 @@ public class StartActivity extends BaseActivity implements INetResult{
         if(subscription!=null){
             subscription.unsubscribe();
         }
+
     }
 
 
@@ -128,12 +148,40 @@ public class StartActivity extends BaseActivity implements INetResult{
      * 从微信获取用户信息；
      */
     public void getUserInfo(){
-        String Imei = ((TelephonyManager) getSystemService(TELEPHONY_SERVICE))
-                .getDeviceId();
+
+            /*有的手机会有双卡双待，这里暂时做这样的处理*/
+            ArrayList<String> imeis =new ArrayList<>();
+
+
+        String Imei1="";
+        String Imei2="";
+
+          if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.LOLLIPOP_MR1) {
+             Imei1 = ((TelephonyManager) getSystemService(TELEPHONY_SERVICE)).getDeviceId(0);
+             Imei2 = ((TelephonyManager) getSystemService(TELEPHONY_SERVICE)).getDeviceId(1);
+          }
+
+           String  Imei0 = ((TelephonyManager) getSystemService(TELEPHONY_SERVICE)) .getDeviceId();
+
+           if(!TextUtils.isEmpty(Imei1)){
+               imeis.add(Imei1);
+           }
+           if(!TextUtils.isEmpty(Imei2)){
+               imeis.add(Imei2);
+           }
+           if(!TextUtils.isEmpty(Imei0)){
+               imeis.add(Imei0);
+           }
+        Log.i("szhua",imeis.toString()) ;
+        String Imei =imeis.get(new Random().nextInt(imeis.size()));
+
+
         String uin = XmlPaser.getUidFromFile();
         //可能是负数，进行转化成uin;
-    //    uin = IntToLongUtil.getUinString(Long.parseLong(uin));
+        //uin = IntToLongUtil.getUinString(Long.parseLong(uin));
         //若是从xml中获取的uin为0或者为空，当前没有登陆的微信号；
+
+        Log.i("szhua","uin"+uin);
         if (TextUtils.isEmpty(uin)||uin.equals("0")) {
             UiUtil.showLongToast(StartActivity.this, "请登录当前的微信号");
         } else {
@@ -145,16 +193,12 @@ public class StartActivity extends BaseActivity implements INetResult{
 
 
     /**
-     * @param uin
-     * @return UserInfo
      *                                                                                   ||
      *                                                                             若是有
-     * 1。从数据库拿出已经存在的用户，若是有用户不存在==》判断是否有当前的账户==》
+     * 1。从数据库拿出已经存在的用户，若是有用户不存在==》判断是否有当前的账户===
      *                                                                            若是没有
      *                                                                                   ||
-     *                                     1。从数据库拿出已经存在的用户，若是没有户存在==》
-     *
-     *
+     *                                     1。从数据库拿出已经存在的用户，若是没有户存在==
      *  链式结构从数据库中获得信息；
      */
     public void getUserInfo(final String uin , final String Imei) {
@@ -191,12 +235,13 @@ public class StartActivity extends BaseActivity implements INetResult{
                                  * 获得解密数据库(EnMicroMsg.db)的密码 ;
                                  */
                                 String password = Md5.getMd5Value(Imei + uin).substring(0, 7);
-
                                 //简单的进行打印（便于跟踪信息）；
-                                Log.i("szhua", "pswssssss" + password);
-                                Log.i("szhua","uin"+uin) ;
+                                Log.i("szhua", "password：" + password);
+                                Log.i("szhua","uin："+uin) ;
+                                Log.i("szhua","IMei："+Imei);
 
                                 AppHolder.getInstance().getUser().setPassword(password);
+
                                 return InitializeWx.getInstance().readWeChatDatabase(password, StartActivity.this, uin, dbManager);
 
                             }
@@ -211,19 +256,17 @@ public class StartActivity extends BaseActivity implements INetResult{
                         @Override
                         public void onError(Throwable e) {
                             showProgress(false);
-                            Log.i("leilei", "this is why you can't get userInfo :"+e.toString());
+                            Log.i("szhua", "this is why you can't get userInfo :"+e.toString());
                             Toast.makeText(StartActivity.this, "解析时出现错误", Toast.LENGTH_SHORT).show();
                         }
                         @Override
                         public void onNext(UserInfo userInfo) {
-                            Log.i("leilei", "NickName:" + userInfo.getNickName());
+                            Log.i("szhua", "NickName:" + userInfo.getNickName());
                             if (TextUtils.isEmpty(userInfo.getWxNumber())) {
                                 userInfo.setWxNumber(userInfo.getWxId());
                             }
                             AppHolder.getInstance().setUser(userInfo);
-                            /**
-                             * 储存当前登录账户的微信号 ;
-                             */
+                            /*储存当前登录账户的微信号*/
                             SharedPrefsUtil.putValue(StartActivity.this, "wx", AppHolder.getInstance().getUser().getWxNumber());
                             initDao.get_token(userInfo.getWxNumber());
                         }

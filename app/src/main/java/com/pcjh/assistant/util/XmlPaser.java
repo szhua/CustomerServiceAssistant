@@ -1,5 +1,6 @@
 package com.pcjh.assistant.util;
 
+import android.util.Log;
 import android.util.Xml;
 import org.xmlpull.v1.XmlPullParser;
 import java.io.File;
@@ -56,7 +57,9 @@ public class XmlPaser {
                 wx =XmlPaser.getUin(inputStream);
                 return  wx ;
             }else{
+                Log.i("szhua","empty");
             }
+
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (Exception e) {

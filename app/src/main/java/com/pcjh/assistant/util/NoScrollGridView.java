@@ -18,11 +18,10 @@ public class NoScrollGridView extends GridView {
         super(context, attrs);
     }
 
-    public NoScrollGridView(Context context, AttributeSet attrs,
-                            int defStyle) {
+    ;;
+    public NoScrollGridView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
-
     @Override
     /**
      * 重写该方法，达到使ListView适应ScrollView的效果

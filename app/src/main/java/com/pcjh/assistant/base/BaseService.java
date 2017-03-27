@@ -4,6 +4,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.support.v4.util.ArrayMap;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -12,12 +13,14 @@ import com.mengma.asynchttp.RequestCode;
 import com.mengma.asynchttp.interf.INetResult;
 import com.pcjh.assistant.WorkService;
 import com.pcjh.assistant.dao.InitDao;
+import com.pcjh.assistant.db.CustomHook;
 import com.pcjh.assistant.db.DbManager;
 import com.pcjh.assistant.entity.Label;
 import com.pcjh.assistant.entity.RConact;
 import com.pcjh.assistant.entity.UserInfo;
 import com.pcjh.assistant.entity.Users;
 import com.pcjh.assistant.entity.WMessage;
+import com.pcjh.assistant.util.ChmodUtil;
 import com.pcjh.assistant.util.InitializeWx;
 import com.pcjh.assistant.util.Md5;
 import com.pcjh.assistant.util.SharedPrefsUtil;
@@ -26,11 +29,9 @@ import com.pcjh.assistant.util.XmlPaser;
 import net.sqlcipher.Cursor;
 import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteDatabaseHook;
-
+import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
@@ -39,14 +40,13 @@ import rx.schedulers.Schedulers;
 
 /**
  * Created by szhua on 2016/11/9.
+ *
  */
 public  class BaseService extends Service implements INetResult {
 
     private InitDao  initDao =new InitDao(this,this);
-
-
     @Override
-    public void onCreate() {
+    public void onCreate(){
         super.onCreate();
     }
 
@@ -62,46 +62,25 @@ public  class BaseService extends Service implements INetResult {
 
     }
 
-
-
-
-
     //==================================================================================================从微信数据库中拿信息 ；
 
-    /**
-     * 初始化数据库 ；进行解密 ；
-     * @param users
-     * @return 数据库
-     */
-    public SQLiteDatabase initPSWdb(Users users) {
-        SQLiteDatabaseHook hook = new SQLiteDatabaseHook() {
-            public void preKey(SQLiteDatabase database) {
-            }
-
-            public void postKey(SQLiteDatabase database) {
-                //执行这样的sql语句进行对数据库的解密；
-                database.rawExecSQL("PRAGMA cipher_migrate;");
-            }
-        };
-        SQLiteDatabase db = SQLiteDatabase.openDatabase(users.getDbPath(), users.getPassword(), null, SQLiteDatabase.OPEN_READWRITE, hook);
-        return db;
+    /* 初始化数据库 ；进行解密 ；*/
+    public SQLiteDatabase initPSWdb(Users users) throws  Exception  {
+        SQLiteDatabaseHook hook = new CustomHook();
+        File file =new File(users.getDbPath());
+        if(file.exists()){
+            Log.i("szhua","testPass:"+users.getPassword());
+            return  SQLiteDatabase.openDatabase(file.getAbsolutePath(), users.getPassword(), null, SQLiteDatabase.OPEN_READWRITE, hook);
+        }
+        return  SQLiteDatabase.openDatabase(users.getDbPath(),users.getPassword(), null, SQLiteDatabase.OPEN_READWRITE, hook);
     }
 
-
-
-    /**
-     * 从微信中获取信息（指定条目的数据）;
-     * @param users
-     * @param msgIdd
-     * @param limitNum
-     * @return
-     * todo changeD in 2016/11/24
-     */
-    public List<WMessage> queryMessage( Users users ,String msgIdd ,int limitNum){
+    /* 从微信中获取信息（指定条目的数据*/
+    public List<WMessage> queryMessage( Users users ,String msgIdd ,int limitNum) throws  Exception {
         SQLiteDatabase db =initPSWdb(users) ;
-        ArrayList<WMessage> wMessages =new ArrayList<WMessage>();
+        ArrayList<WMessage> wMessages =new ArrayList<>();
         Cursor c =db.rawQuery("select content,talker,createTime,msgId,isSend,imgPath from message where msgId  > "
-                +msgIdd +" limit " +limitNum, null) ;
+                +msgIdd +" limit " +limitNum, null);
         while (c.moveToNext()) {
             String content = c.getString(c.getColumnIndex("content"));
             String talker = c.getString(c.getColumnIndex("talker"));
@@ -127,16 +106,12 @@ public  class BaseService extends Service implements INetResult {
     }
 
 
-    /**
-     * 获得contactLabels ；
-     * @param users
-     * @return contactLabels
-     */
-    public HashMap<String,Label> _getLabels(Users users) {
-        SQLiteDatabase db =initPSWdb(users) ;
-        Log.i("szhua",users.getPassword()) ;
+    /*获得contactLabels  */
+    public ArrayMap<String,Label> _getLabels(Users users) throws  Exception{
+        SQLiteDatabase db =initPSWdb(users);
+        Log.i("szhua",users.getPassword());
         Cursor c = db.query("ContactLabel", new String[]{"labelID","labelName","createTime"}, null, null, null, null, null);
-        HashMap<String,Label> hashMap =new HashMap<String ,Label>() ;
+        ArrayMap<String,Label> hashMap =new ArrayMap<>() ;
        try{
            while (c.moveToNext()) {
                String labelID = c.getString(c.getColumnIndex("labelID"));
@@ -149,7 +124,7 @@ public  class BaseService extends Service implements INetResult {
                hashMap.put(labelID,label);
            }
        }catch (Exception e){
-
+         e.printStackTrace();
        }
         c.close();
         db.close();
@@ -157,15 +132,11 @@ public  class BaseService extends Service implements INetResult {
     }
 
 
-    /**
-     * 从微信中获得用户 ;
-     * @param users
-     * @return
-     */
-    public HashMap<String,RConact> _GetContact( Users users ) {
+    /** 从微信中获得用户*/
+    public ArrayMap<String,RConact> _GetContact( Users users ) throws  Exception {
         SQLiteDatabase db =initPSWdb(users) ;
         Cursor c =db.rawQuery("select  username  ,nickname , conRemark ,alias ,type ,contactLabelIds  from rcontact where type not in (4 ,33)",null);
-        HashMap<String,RConact> RConacts =new HashMap<String ,RConact>() ;
+        ArrayMap<String,RConact> RConacts =new ArrayMap<>() ;
         while (c.moveToNext()) {
             String conRemark =c.getString(c.getColumnIndex("conRemark")) ;
             String username = c.getString(c.getColumnIndex("username"));
@@ -220,21 +191,15 @@ public  class BaseService extends Service implements INetResult {
 
 
     /**
-     * @param uin
-     * @return UserInfo
-     *                                                                                   ||
      *                                                                             若是有
      * 1。从数据库拿出已经存在的用户，若是有用户不存在==》判断是否有当前的账户==》
      *                                                                            若是没有
      *                                                                                   ||
      *                                     1。从数据库拿出已经存在的用户，若是没有户存在==》
-     *
-     *
      *  链式结构从数据库中获得信息；
      */
     public void getUserInfo(final String uin , final String Imei) {
         final DbManager dbManager =new DbManager(getBaseContext()) ;
-        Observable<UserInfo> userInfoOb = null;
             Observable.just(uin)
                     .observeOn(Schedulers.io())
                     .map(new Func1<String, ArrayList<Users>>() {
@@ -256,14 +221,11 @@ public  class BaseService extends Service implements INetResult {
                                 Log.i("szhua", "从数据库获取用户成功！");
                                 return InitializeWx.getInstance().readDatabaseFromOldInfo(users,getBaseContext(), uin, dbManager);
                             } else {
-                                /**
-                                 * 获得解密数据库(EnMicroMsg.db)的密码 ;
-                                 */
+                                /* 获得解密数据库(EnMicroMsg.db)的密码 */
                                 String password = Md5.getMd5Value(Imei + uin).substring(0, 7);
-
                                 //简单的进行打印（便于跟踪信息）；
-                                Log.i("szhua", "psw" + password);
-                                Log.i("szhua","uin"+uin) ;
+                                Log.i("szhua", "psw:" + password);
+                                Log.i("szhua","uin:"+uin) ;
 
                                 AppHolder.getInstance().getUser().setPassword(password);
                                 return InitializeWx.getInstance().readWeChatDatabase(password, getBaseContext(), uin, dbManager);
@@ -272,7 +234,6 @@ public  class BaseService extends Service implements INetResult {
                         }
                     })
                     .observeOn(AndroidSchedulers.mainThread())
-                    // TODO: 2016/11/26  checkTheMethodisRight：
                     .subscribe(new Subscriber<UserInfo>() {
                         @Override
                         public void onCompleted() {

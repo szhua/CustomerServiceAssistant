@@ -19,12 +19,10 @@ public class JobSchedulerService extends JobService {
         jobFinished(params, false);
         return false;
     }
-
     private void onEnd(Intent rootIntent) {
         startService(new Intent(getApplication(), WorkService.class));
         startService(new Intent(getApplication(), WatchDogService.class));
     }
-
     @Override
     public boolean onStopJob(JobParameters params) {
         onEnd(null);

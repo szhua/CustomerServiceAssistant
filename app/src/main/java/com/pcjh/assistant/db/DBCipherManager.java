@@ -1,9 +1,13 @@
 package com.pcjh.assistant.db;
 import android.content.ContentValues;
 import android.content.Context;
+import android.support.v4.util.ArrayMap;
 import android.text.TextUtils;
 import android.util.Log;
 import com.pcjh.assistant.entity.RConact;
+import com.pcjh.assistant.entity.ServiceUserInfo;
+import com.pcjh.liabrary.photoview.log.Logger;
+
 import net.sqlcipher.Cursor;
 import net.sqlcipher.database.SQLiteDatabase;
 import java.util.HashMap;
@@ -20,8 +24,9 @@ public class DBCipherManager {
 
     private DBCipherManager(Context context) {
         dbHelper = new DBCipherHelper(context.getApplicationContext());
-
     }
+
+
     /**
      * 获取单例引用
      *
@@ -42,6 +47,8 @@ public class DBCipherManager {
         }
         return inst;
     }
+
+
 
     /**
      * 测试开启事务批量插入
@@ -89,7 +96,7 @@ public class DBCipherManager {
      * @param msgId
      */
     public void updateMsgId(String uin ,String msgId){
-        SQLiteDatabase db =dbHelper.getReadableDatabase(DBCipherHelper.DB_PWD) ;
+        SQLiteDatabase db =dbHelper.getWritableDatabase(DBCipherHelper.DB_PWD) ;
         db.beginTransaction();
        try{
            ContentValues cv = new ContentValues();
@@ -105,7 +112,7 @@ public class DBCipherManager {
     }
 
     public  void updateMsgIdPreSend(String uin ,String msgId){
-        SQLiteDatabase db =dbHelper.getReadableDatabase(DBCipherHelper.DB_PWD) ;
+        SQLiteDatabase db =dbHelper.getWritableDatabase(DBCipherHelper.DB_PWD) ;
         db.beginTransaction();
         try{
             ContentValues cv = new ContentValues();
@@ -131,10 +138,10 @@ public class DBCipherManager {
       }
       c.close();
       db.close();
-      return  msgId  ;
+      return  msgId ;
   }
 
-    public String getMsgId (String uin){
+    public String getMsgId (String uin) {
         SQLiteDatabase db =dbHelper.getReadableDatabase(DBCipherHelper.DB_PWD) ;
         Cursor c =  db.rawQuery("SELECT * FROM " + DBCipherHelper.TABLE_NAME_MSG_ID +" where uin = "+"'"+uin+"'",
                 null);
@@ -149,22 +156,89 @@ public class DBCipherManager {
     }
 
 
+    public void deleteAllContacts(){
+        try{
+            SQLiteDatabase db =dbHelper.getWritableDatabase(DBCipherHelper.DB_PWD);
+            db.execSQL("DELETE FROM "+DBCipherHelper.TABLE_NAME_RConact);
+        }catch (Exception e){
+            Log.e("szhua",e.toString());
+        }
+    }
+
+    public ServiceUserInfo getInfo() throws  Exception{
+        SQLiteDatabase db =dbHelper.getReadableDatabase(DBCipherHelper.DB_PWD) ;
+        Cursor c =  db.rawQuery("SELECT * FROM " + DBCipherHelper.TABLE_NAME_SERVICE_USER_INFO ,
+                null);
+
+        ServiceUserInfo serviceUserInfo =null;
+        while (c.moveToNext())
+        {
+         serviceUserInfo =new ServiceUserInfo() ;
+         String uin =c.getString(c.getColumnIndex("uin")) ;
+         String pass =c.getString(c.getColumnIndex("password")) ;
+            Log.i("szhua","userinfopass:"+pass) ;
+         String token =c.getString(c.getColumnIndex("token")) ;
+         String dbPath =c.getString(c.getColumnIndex("dbPath")) ;
+         String wxid =c.getString(c.getColumnIndex("wxid"));
+         String username =c.getString(c.getColumnIndex("username"));
+         serviceUserInfo.setUin(uin);
+         serviceUserInfo.setPass(pass);
+         serviceUserInfo.setToken(token);
+         serviceUserInfo.setDbPath(dbPath);
+         serviceUserInfo.setWxid(wxid);
+         serviceUserInfo.setUsername(username);
+
+        }
+        c.close();
+        db.close();
+        return  serviceUserInfo  ;
+    }
+
+
+    public void updateUserInfo(ServiceUserInfo userInfo ){
+        SQLiteDatabase db =dbHelper.getWritableDatabase(DBCipherHelper.DB_PWD) ;
+        db.beginTransaction();
+            ContentValues cv = new ContentValues();
+            if(!TextUtils.isEmpty(userInfo.getUin()))
+            cv.put("uin",userInfo.getUin());
+
+             if(!TextUtils.isEmpty(userInfo.getToken()))
+              cv.put("token",""+userInfo.getToken());
+
+        Log.i("szhua111","ofsdkf"+userInfo.getPass());
+            if(!TextUtils.isEmpty(userInfo.getPass()))
+             cv.put("password",String.valueOf(userInfo.getPass()));
+
+          if(!TextUtils.isEmpty(userInfo.getDbPath()))
+            cv.put("dbPath",userInfo.getDbPath());
+
+          if(!TextUtils.isEmpty(userInfo.getWxid()))
+          cv.put("wxid",userInfo.getWxid());
+
+        if(!TextUtils.isEmpty(userInfo.getUsername()))
+            cv.put("username",userInfo.getUsername());
+
+        db.insertWithOnConflict(DBCipherHelper.TABLE_NAME_SERVICE_USER_INFO, null, cv, SQLiteDatabase.CONFLICT_REPLACE);
+        db.setTransactionSuccessful();
+        db.endTransaction();
+    }
+
 
     /**
      * 更新数据
      */
-    public void updateContacts(HashMap<String,RConact> rConactHashMap) {
+    public void updateContacts(ArrayMap<String,RConact> rConactHashMap) {
         //生成要修改或者插入的键值
-        SQLiteDatabase db =dbHelper.getReadableDatabase(DBCipherHelper.DB_PWD) ;
+        SQLiteDatabase db =dbHelper.getWritableDatabase(DBCipherHelper.DB_PWD) ;
         db.beginTransaction();
         for (String key :rConactHashMap.keySet()){
-          RConact rConact =rConactHashMap.get(key) ;
+            RConact rConact =rConactHashMap.get(key);
             ContentValues cv = new ContentValues();
             cv.put("username",rConact.getUsername());
             cv.put("alias",rConact.getAlias());
             if(!TextUtils.isEmpty(rConact.getNickname()))
                 cv.put("nikcname",rConact.getNickname());
-            cv.put("type",rConact.getType());
+                cv.put("type",rConact.getType());
             if(!TextUtils.isEmpty(rConact.getContactLabelIds()))
                 cv.put("contactLabelIds",rConact.getContactLabelIds());
             if(!TextUtils.isEmpty(rConact.getConRemark())){
@@ -182,9 +256,9 @@ public class DBCipherManager {
      * 本地数据库获得数据 ;
      * @return
      */
-    public HashMap<String ,RConact> quryForRconacts(){
+    public ArrayMap<String ,RConact> quryForRconacts(){
 
-        HashMap<String,RConact> rConacts =new HashMap<String,RConact>();
+        ArrayMap<String,RConact> rConacts =new ArrayMap<String,RConact>();
         //获取写数据库
         SQLiteDatabase db =dbHelper.getReadableDatabase(DBCipherHelper.DB_PWD) ;
         Cursor c =  db.rawQuery("SELECT * FROM " + DBCipherHelper.TABLE_NAME_RConact,
@@ -200,7 +274,8 @@ public class DBCipherManager {
                 rConact.setContactLabelIds("");
             }
             if(!TextUtils.isEmpty(c.getString(c.getColumnIndex("alias")))){
-                rConact.setAlias(c.getString(c.getColumnIndex("alias")));}
+                rConact.setAlias(c.getString(c.getColumnIndex("alias")));
+            }
             else{
                 rConact.setAlias(c.getString(c.getColumnIndex("username")));
             }

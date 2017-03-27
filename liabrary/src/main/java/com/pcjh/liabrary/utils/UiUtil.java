@@ -39,7 +39,7 @@ public class UiUtil {
         }
         toast = new Toast(context);
         View view = LayoutInflater.from(context).inflate(R.layout.toast_layout, null);
-        TextView textMsg = (TextView) view.findViewById(R.id.toastMsg);
+        TextView textMsg = (TextView)view.findViewById(R.id.toastMsg);
         textMsg.setText(message);
         toast.setView(view);
         toast.setDuration(Toast.LENGTH_SHORT);

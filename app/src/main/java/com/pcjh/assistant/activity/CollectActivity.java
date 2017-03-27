@@ -65,7 +65,6 @@ public class CollectActivity extends BaseActivity {
                                 date.setText(result);
                                 collectFragment.dateChanged(result);
                             }
-
                         }
                         // 设置初始日期
                         , c.get(Calendar.YEAR), c.get(Calendar.MONTH), c

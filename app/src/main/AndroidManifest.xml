@@ -42,10 +42,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-
-
-
+        
         <!--进程保活的一些手段-->
 
         <receiver android:name=".MyNetWorkChangedListener"/>
@@ -69,8 +66,8 @@
 
         <service android:name="WorkService"
             />
-        <service android:name="WorkService$WorkNotificationService"
-            />
+        <!--<service android:name="WorkService$WorkNotificationService"-->
+            <!--/>-->
 
         <service
             android:name="JobSchedulerService"

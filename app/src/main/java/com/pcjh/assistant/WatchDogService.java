@@ -7,12 +7,16 @@ import android.app.Service;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.os.RemoteException;
+
 import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
@@ -30,15 +34,32 @@ public class WatchDogService extends Service {
 
     public static PowerManager.WakeLock sWakeLock;
 
+    private CustomBinder customBinder ;
+    private CustomConnection customConnection ;
+
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+
+        if(customBinder==null){
+            customBinder =new CustomBinder() ;
+        }
+        customConnection =new CustomConnection() ;
+
+    }
+
     /**
      * 守护服务，运行在:watch子进程中
      */
     private int onStart(Intent intent, int flags, int startId) {
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.M) {
-            startForeground(sHashCode, new Notification());
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2)
-                startService(new Intent(getApplication(), WatchDogNotificationService.class));
-        }
+
+
+//        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.M) {
+//            startForeground(sHashCode, new Notification());
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2)
+//                startService(new Intent(getApplication(), WatchDogNotificationService.class));
+//        }
 
         if (sSubscription != null && !sSubscription.isUnsubscribed()) return START_STICKY;
 
@@ -48,8 +69,7 @@ public class WatchDogService extends Service {
             JobInfo.Builder builder = new JobInfo.Builder(sHashCode, new ComponentName(getApplication(), JobSchedulerService.class));
             builder.setPeriodic(INTERVAL_WAKE_UP);
             //Android 7.0+ 增加了一项针对 JobScheduler 的新限制，最小间隔只能是下面设定的数字
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-                builder.setPeriodic(JobInfo.getMinPeriodMillis(), JobInfo.getMinFlexMillis());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) builder.setPeriodic(JobInfo.getMinPeriodMillis(), JobInfo.getMinFlexMillis());
             builder.setPersisted(true);
             JobScheduler scheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
             scheduler.schedule(builder.build());
@@ -104,13 +124,30 @@ public class WatchDogService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        WatchDogService.this.bindService(new Intent(WatchDogService.this,WorkService.class),customConnection, Context.BIND_IMPORTANT);
+
+        Notification.Builder builder =new Notification.Builder(this);
+        PendingIntent pendingIntent =PendingIntent.getService(this,0,intent,0);
+        builder.setSmallIcon(R.mipmap.ic_launcher)
+                .setContentIntent(pendingIntent)
+                .setTicker("启动服务中")
+                .setAutoCancel(false)
+                .setWhen(System.currentTimeMillis())
+                .setContentTitle("客服助手");
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.JELLY_BEAN){
+            builder.setContentInfo("客服助手");
+        }
+        if(Build.VERSION.SDK_INT>Build.VERSION_CODES.JELLY_BEAN){
+            startForeground(startId,builder.build());
+        }else{
+            startForeground(startId,builder.getNotification());
+        }
         return onStart(intent, flags, startId);
     }
 
     @Override
     public IBinder onBind(Intent intent) {
-        onStart(intent, 0, 0);
-        return null;
+        return customBinder;
     }
 
     private void onEnd(Intent rootIntent) {
@@ -152,4 +189,28 @@ public class WatchDogService extends Service {
             return null;
         }
     }
+
+    private class CustomBinder extends  CustomAidlInterface.Stub{
+        @Override
+        public void basicTypes(int anInt, long aLong, boolean aBoolean, float aFloat, double aDouble, String aString) throws RemoteException {
+
+        }
+    }
+
+    private class CustomConnection implements ServiceConnection {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+
+        }
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            WatchDogService.this.startService(new Intent(WatchDogService.this,WorkService.class));
+            WatchDogService.this.bindService(new Intent(WatchDogService.this,WorkService.class),customConnection, Context.BIND_IMPORTANT) ;
+        }
+    }
+
+
+
+
+
 }

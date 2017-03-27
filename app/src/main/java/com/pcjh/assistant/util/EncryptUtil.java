@@ -37,7 +37,7 @@ public class EncryptUtil {
             file.delete();
         }
         try {
-            //确保问价你的存在性，创建一个新的文件 ;\
+            //确保文件的存在性，创建一个新的文件;
             file.createNewFile() ;
             fileOutputStream =new FileOutputStream(file) ;
             bufferedOutputStream =new BufferedOutputStream(fileOutputStream) ;

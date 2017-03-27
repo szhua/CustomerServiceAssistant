@@ -2,9 +2,7 @@ package com.pcjh.assistant.entity;
 
 /**
  * Created by szhua on 2016/11/24.
- *
  * 转换为json的联系人实体类 《base》；
- *
  */
 
 public class ContactForJsonBase {

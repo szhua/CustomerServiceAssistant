@@ -8,7 +8,6 @@ import java.io.Serializable;
  * Created by szhua on 2016/10/18.
  * 这个类用于储存本机访问过的数据库的信息；
  * 这样就方便的少去很多工作；
- *
  * 这里先暂时的用uin作为用户的唯一的标识；
  */
 public class Users  implements Serializable{
